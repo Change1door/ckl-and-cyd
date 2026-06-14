@@ -318,13 +318,13 @@
         <form id="add-photo-form">
           <label class="modal-label">城市 / city <input type="text" name="city" required placeholder="e.g. 上海"></label>
           <label class="modal-label">年份 / year <input type="number" name="year" required min="1900" max="2100" placeholder="2025"></label>
-          <label class="modal-label">图片链接 / photo URL (可选) <input type="url" name="url" placeholder="留空自动生成随机配图"></label>
+          <label class="modal-label">选择图片 / choose photo <input type="file" name="file" accept="image/*" style="padding:4px;"></label>
           <div style="display:flex; gap: 10px; margin-top: 14px;">
             <button type="submit" class="retro-btn" style="font-size: 1rem; padding: 8px 18px;">save</button>
             <button type="button" class="retro-btn" id="add-photo-cancel" style="font-size: 1rem; padding: 8px 18px; background: #eee;">cancel</button>
           </div>
-          <p style="font-size:0.8rem;color:var(--ink-soft);margin-top:8px;">
-            💡 留空自动用随机配图；也可粘贴任意图片链接。
+          <p style="font-size:0.8rem;color:var(--ink-soft);margin-top:6px;">
+            💡 选相册里的图直接上传，照片自动共享给所有人。
           </p>
         </form>
       </div>
@@ -370,6 +370,16 @@
     const statusEl = document.getElementById('gallery-upload-status');
 
     /* ==================== 照片 ==================== */
+    // File → base64 data URL
+    function fileToDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
     // 从 Supabase 表读取所有照片
     async function loadPhotos() {
       const { data, error } = await supabase
@@ -440,25 +450,29 @@
       const fd = new FormData(photoForm);
       const city = fd.get('city').trim();
       const year = fd.get('year').toString().trim();
-      let photoUrl = fd.get('url')?.trim();
+      const file = fd.get('file');
       if (!city || !year) { alert('请填写城市和年份'); return; }
 
-      // 如果没填 URL，自动生成随机配图
-      if (!photoUrl) {
+      statusEl.textContent = '处理中...';
+
+      // 把文件转 base64 data URL
+      let photoUrl;
+      if (file && file.size) {
+        photoUrl = await fileToDataURL(file);
+      } else {
+        // 留空 → 自动配图
         const seed = encodeURIComponent(city + year + Math.random().toString(36).slice(2, 6));
         photoUrl = `https://picsum.photos/seed/${seed}/400/300`;
       }
 
       statusEl.textContent = '保存中...';
 
-      // 写入 Supabase 表
       const { error: insertError } = await supabase
         .from('gallery')
         .insert({ city, year, url: photoUrl });
 
       if (insertError) {
         statusEl.textContent = '保存失败: ' + insertError.message;
-        console.error('insert error:', insertError);
         return;
       }
 
