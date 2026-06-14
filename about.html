@@ -318,13 +318,13 @@
         <form id="add-photo-form">
           <label class="modal-label">城市 / city <input type="text" name="city" required placeholder="e.g. 上海"></label>
           <label class="modal-label">年份 / year <input type="number" name="year" required min="1900" max="2100" placeholder="2025"></label>
-          <label class="modal-label">选择图片 / choose photo <input type="file" name="file" accept="image/*" style="padding:4px;"></label>
+          <label class="modal-label">图片链接 / photo URL (可选) <input type="url" name="url" placeholder="留空自动生成随机配图"></label>
           <div style="display:flex; gap: 10px; margin-top: 14px;">
-            <button type="submit" class="retro-btn" style="font-size: 1rem; padding: 8px 18px;">upload & save</button>
+            <button type="submit" class="retro-btn" style="font-size: 1rem; padding: 8px 18px;">save</button>
             <button type="button" class="retro-btn" id="add-photo-cancel" style="font-size: 1rem; padding: 8px 18px; background: #eee;">cancel</button>
           </div>
           <p style="font-size:0.8rem;color:var(--ink-soft);margin-top:8px;">
-            ⚠ 任何人获得链接均可看到上传的照片。
+            💡 留空自动用随机配图；也可粘贴任意图片链接。
           </p>
         </form>
       </div>
@@ -440,41 +440,29 @@
       const fd = new FormData(photoForm);
       const city = fd.get('city').trim();
       const year = fd.get('year').toString().trim();
-      const file = fd.get('file');
+      let photoUrl = fd.get('url')?.trim();
       if (!city || !year) { alert('请填写城市和年份'); return; }
-      if (!file || !file.size) { alert('请选择一张图片'); return; }
 
-      statusEl.textContent = '上传中...';
-      const fileExt = file.name.split('.').pop();
-
-      // 1. 上传到 Supabase Storage
-      const filePath = Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + fileExt;
-      const { error: uploadError } = await supabase.storage
-        .from('photos')
-        .upload(filePath, file, { contentType: file.type, upsert: false });
-
-      if (uploadError) {
-        statusEl.textContent = '上传失败: ' + uploadError.message;
-        console.error('upload error:', uploadError);
-        return;
+      // 如果没填 URL，自动生成随机配图
+      if (!photoUrl) {
+        const seed = encodeURIComponent(city + year + Math.random().toString(36).slice(2, 6));
+        photoUrl = `https://picsum.photos/seed/${seed}/400/300`;
       }
 
-      // 2. 生成公开 URL
-      const { data: urlData } = supabase.storage.from('photos').getPublicUrl(filePath);
-      const publicUrl = urlData.publicUrl;
+      statusEl.textContent = '保存中...';
 
-      // 3. 写入 Supabase 表
+      // 写入 Supabase 表
       const { error: insertError } = await supabase
         .from('gallery')
-        .insert({ city, year, url: publicUrl });
+        .insert({ city, year, url: photoUrl });
 
       if (insertError) {
-        statusEl.textContent = '写入数据库失败: ' + insertError.message;
+        statusEl.textContent = '保存失败: ' + insertError.message;
         console.error('insert error:', insertError);
         return;
       }
 
-      statusEl.textContent = '已上传 ✓';
+      statusEl.textContent = '已保存 ✓';
       await loadPhotos();
       closePhotoModal();
     });
