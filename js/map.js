@@ -1,0 +1,341 @@
+/* ============================================================
+   地图页：圆形卡通地球 + equirectangular 投影 + 城市 pin
+   - SVG 地图用 equirectangular 投影，被圆形 .map-round 裁切
+   - pin 按经纬度 + 墨卡托 y 映射到圆形区域内的百分比
+   - 小王子飞机沿着地球外围轨道飞行
+   ============================================================ */
+
+(function () {
+  const mapEl = document.getElementById('globe');
+  const pinsHost = document.getElementById('city-pins');
+  const cityList = document.getElementById('city-list');
+  const popover = document.getElementById('popover');
+  const popoverBody = document.getElementById('popover-body');
+  const popoverClose = document.getElementById('popover-close');
+  const popoverAddPhoto = document.getElementById('popover-add-photo');
+  const popoverDelete = document.getElementById('popover-delete');
+  const addBtn = document.getElementById('add-city-btn');
+  const addCityModal = document.getElementById('add-city-modal');
+  const addCityClose = document.getElementById('add-city-close');
+  const addCityCancel = document.getElementById('add-city-cancel');
+  const addCityForm = document.getElementById('add-city-form');
+  const addPhotoModal = document.getElementById('add-photo-modal');
+  const addPhotoClose = document.getElementById('add-photo-close');
+  const addPhotoCancel = document.getElementById('add-photo-cancel');
+  const addPhotoForm = document.getElementById('add-photo-form');
+  const addPhotoCityName = document.getElementById('add-photo-city');
+
+  if (!mapEl || !pinsHost || typeof window.geo === 'undefined') return;
+
+  const W = 1000, H = 500;
+  const project = window.geo.equirectangular(W, H);
+
+  /* ===== 数据 ===== */
+  const STORAGE_KEY = 'travel-trips-v1';
+  let allTrips = [];
+  let userTrips = [];
+  let photoIndex = {};
+  let currentTrip = null;
+
+  function loadTrips() {
+    return fetch('data/trips.json')
+      .then((r) => r.ok ? r.json() : FALLBACK)
+      .catch(() => FALLBACK)
+      .then((base) => {
+        try { userTrips = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { userTrips = []; }
+        allTrips = base.concat(userTrips);
+        allTrips.forEach((t) => { const k = tripKey(t); if (!(k in photoIndex)) photoIndex[k] = 0; });
+        return allTrips;
+      });
+  }
+
+  function persistUserTrips() { localStorage.setItem(STORAGE_KEY, JSON.stringify(userTrips)); }
+  function tripKey(t) { return t.city + '|' + t.lat + '|' + t.lng; }
+  function isUserTrip(t) { return userTrips.indexOf(t) !== -1; }
+
+  const FALLBACK = [
+    { city: '上海', lat: 31.23, lng: 121.47, date: '2024-04', photos: [{ url: 'https://picsum.photos/seed/sh/600/400', note: '外滩的风永远很清醒。' }] },
+  ];
+
+  const PIN_EMOJIS = ['⭐', '♡', '✿', '★', '🌸'];
+
+  /* ===== 世界地图 ===== */
+  function loadWorld() {
+    const sources = ['data/world.geojson', 'https://cdn.jsdelivr.net/gh/datasets/geo-countries@master/data/countries.geojson'];
+    function tryNext(i) {
+      if (i >= sources.length) return Promise.resolve();
+      return fetch(sources[i])
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => {
+          if (!data || data.type !== 'FeatureCollection' || !data.features) return tryNext(i + 1);
+          window.__countries = data.features;
+          drawWorld(data.features);
+        })
+        .catch(() => tryNext(i + 1));
+    }
+    return tryNext(0);
+  }
+
+  function drawWorld(features) {
+    // continents
+    const gCont = document.getElementById('continents');
+    gCont.innerHTML = '';
+    const dStr = window.geo.pathGeneric(project)({ type: 'FeatureCollection', features });
+    if (dStr) {
+      const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      p.setAttribute('d', dStr);
+      p.setAttribute('class', 'continent');
+      gCont.appendChild(p);
+    }
+    // graticule
+    const gGrid = document.getElementById('graticule');
+    gGrid.innerHTML = '';
+    const gridFc = window.geo.graticuleFlat([30, 30]);
+    const gStr = window.geo.pathGeneric(project)(gridFc);
+    if (gStr) {
+      const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      p.setAttribute('d', gStr);
+      gGrid.appendChild(p);
+    }
+  }
+
+  /* ===== 经纬度 → 百分比 =====
+     equirectangular 直接线性映射（儿童画笔触风格，不做墨卡托修正） */
+  function projectToPercent(lat, lng) {
+    const xPct = ((lng + 180) / 360) * 100;
+    const yPct = ((90 - lat) / 180) * 100;
+    return { xPct, yPct };
+  }
+
+  const pins = [];
+  function addPin(trip) {
+    const el = document.createElement('div');
+    el.className = 'city-pin';
+    el.innerHTML = `<div class="city-pin__inner"><span>${PIN_EMOJIS[pins.length % PIN_EMOJIS.length]}</span></div>`;
+    const proj = projectToPercent(trip.lat, trip.lng);
+    el.style.setProperty('--x', proj.xPct + '%');
+    el.style.setProperty('--y', proj.yPct + '%');
+    el.addEventListener('click', (e) => { e.stopPropagation(); openPopover(trip, el); });
+    pinsHost.appendChild(el);
+    pins.push({ el, trip });
+  }
+
+  function addListItem(trip) {
+    if (!cityList) return;
+    const li = document.createElement('li');
+    li.innerHTML = `${trip.city} <span>${trip.date || ''}</span>`;
+    li.addEventListener('click', () => {
+      const pin = pins.find((p) => p.trip === trip);
+      if (pin) openPopover(trip, pin.el);
+    });
+    cityList.appendChild(li);
+  }
+
+  /* ===== 弹窗 ===== */
+  function renderPopoverBody(trip) {
+    const key = tripKey(trip);
+    const idx = photoIndex[key] || 0;
+    const photo = (trip.photos && trip.photos[idx]) || { url: '', note: '(no photo)' };
+    const total = (trip.photos || []).length;
+    const dots = total > 1
+      ? `<div class="photo-carousel__dots">${Array.from({ length: total }, (_, i) => `<span class="photo-carousel__dot ${i === idx ? 'active' : ''}" data-i="${i}"></span>`).join('')}</div>`
+      : '';
+    const nav = total > 1
+      ? `<button class="photo-carousel__nav photo-carousel__nav--prev" data-dir="-1" type="button">‹</button><button class="photo-carousel__nav photo-carousel__nav--next" data-dir="1" type="button">›</button>`
+      : '';
+    return `
+      <div class="city-popup">
+        <h3>♡ ${trip.city}</h3><div class="city-popup__date">${trip.date || ''}</div>
+        <div class="photo-carousel" id="photo-carousel">
+          <img class="photo-carousel__img" src="${photo.url}" alt="${trip.city}" loading="lazy" onerror="this.src='https://picsum.photos/seed/${encodeURIComponent(trip.city)}/600/400'">
+          ${nav}${dots}
+        </div>
+        <p>${photo.note || ''}</p>
+        ${total > 1 ? `<div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-soft); text-align: right;">${idx + 1} / ${total}</div>` : ''}
+      </div>`;
+  }
+
+  function openPopover(trip, pinEl) {
+    currentTrip = trip;
+    photoIndex[tripKey(trip)] = 0;
+    popoverBody.innerHTML = renderPopoverBody(trip);
+    popover.hidden = false;
+    positionPopover(pinEl);
+    bindCarouselEvents();
+  }
+
+  function positionPopover(pinEl) {
+    const rect = pinEl.getBoundingClientRect();
+    const popRect = popover.getBoundingClientRect();
+    const popH = popRect.height || 360, popW = popRect.width || 300;
+    let top = rect.top - 6, transform = 'translate(-50%, -100%)';
+    if (top - popH < 80) { top = rect.bottom + 6; transform = 'translate(-50%, 0%)'; }
+    let left = rect.left + rect.width / 2;
+    const halfW = popW / 2, margin = 12;
+    if (left - halfW < margin) left = halfW + margin;
+    if (left + halfW > window.innerWidth - margin) left = window.innerWidth - halfW - margin;
+    popover.style.left = left + 'px';
+    popover.style.top = top + 'px';
+    popover.style.transform = transform;
+  }
+
+  function bindCarouselEvents() {
+    const carousel = document.getElementById('photo-carousel');
+    if (!carousel) return;
+    carousel.querySelectorAll('.photo-carousel__nav').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!currentTrip) return;
+        const key = tripKey(currentTrip);
+        const total = (currentTrip.photos || []).length;
+        if (total <= 1) return;
+        let idx = photoIndex[key] + parseInt(btn.dataset.dir, 10);
+        if (idx < 0) idx = total - 1;
+        if (idx >= total) idx = 0;
+        photoIndex[key] = idx;
+        popoverBody.innerHTML = renderPopoverBody(currentTrip);
+        bindCarouselEvents();
+      });
+    });
+    carousel.querySelectorAll('.photo-carousel__dot').forEach((dot) => {
+      dot.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!currentTrip) return;
+        photoIndex[tripKey(currentTrip)] = parseInt(dot.dataset.i, 10);
+        popoverBody.innerHTML = renderPopoverBody(currentTrip);
+        bindCarouselEvents();
+      });
+    });
+  }
+
+  function closePopover() { popover.hidden = true; currentTrip = null; }
+  popoverClose && popoverClose.addEventListener('click', closePopover);
+
+  /* ===== 弹窗内按钮 ===== */
+  popoverAddPhoto && popoverAddPhoto.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!currentTrip) return;
+    openAddPhotoModal(currentTrip);
+  });
+  popoverDelete && popoverDelete.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!currentTrip) return;
+    const trip = currentTrip;
+    if (!confirm(`确定要删除「${trip.city}」这个地点吗？`)) return;
+    deleteTrip(trip);
+  });
+
+  function deleteTrip(trip) {
+    const idx = userTrips.indexOf(trip);
+    if (idx !== -1) { userTrips.splice(idx, 1); persistUserTrips(); }
+    const i = allTrips.indexOf(trip);
+    if (i !== -1) allTrips.splice(i, 1);
+    const p = pins.find((pp) => pp.trip === trip);
+    if (p) { p.el.remove(); const pi = pins.indexOf(p); if (pi !== -1) pins.splice(pi, 1); }
+    cityList.querySelectorAll('li').forEach((li) => { if (li.textContent.startsWith(trip.city)) li.remove(); });
+    closePopover();
+  }
+
+  /* ===== Modal ===== */
+  function openAddCityModal() { addCityModal.hidden = false; addCityForm.reset(); }
+  function closeAddCityModal() { addCityModal.hidden = true; }
+  addBtn && addBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openAddCityModal(); });
+  addCityClose && addCityClose.addEventListener('click', closeAddCityModal);
+  addCityCancel && addCityCancel.addEventListener('click', closeAddCityModal);
+  addCityModal && addCityModal.addEventListener('click', (e) => { if (e.target === addCityModal) closeAddCityModal(); });
+  addCityForm && addCityForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const fd = new FormData(addCityForm);
+    const city = fd.get('city').trim(), lng = parseFloat(fd.get('lng')), lat = parseFloat(fd.get('lat'));
+    const date = fd.get('date').trim() || '', photo = fd.get('photo').trim() || `https://picsum.photos/seed/${encodeURIComponent(city)}/600/400`;
+    const note = fd.get('note').trim() || '';
+    if (!city || isNaN(lng) || isNaN(lat)) { alert('请填写城市名和经纬度'); return; }
+    const trip = { city, lng, lat, date, photos: [{ url: photo, note }] };
+    userTrips.push(trip); persistUserTrips();
+    allTrips.push(trip); photoIndex[tripKey(trip)] = 0;
+    addPin(trip); addListItem(trip);
+    closeAddCityModal();
+  });
+
+  function openAddPhotoModal(trip) {
+    addPhotoCityName.textContent = trip.city;
+    addPhotoModal.dataset.tripCity = trip.city;
+    addPhotoForm.reset();
+    addPhotoModal.hidden = false;
+  }
+  function closeAddPhotoModal() { addPhotoModal.hidden = true; }
+  addPhotoClose && addPhotoClose.addEventListener('click', closeAddPhotoModal);
+  addPhotoCancel && addPhotoCancel.addEventListener('click', closeAddPhotoModal);
+  addPhotoModal && addPhotoModal.addEventListener('click', (e) => { if (e.target === addPhotoModal) closeAddPhotoModal(); });
+  addPhotoForm && addPhotoForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const cityName = addPhotoModal.dataset.tripCity;
+    const trip = allTrips.find((t) => t.city === cityName);
+    if (!trip) { closeAddPhotoModal(); return; }
+    const fd = new FormData(addPhotoForm);
+    const url = fd.get('photo').trim(), note = fd.get('note').trim();
+    if (!url || !note) { alert('请填写照片链接和描述'); return; }
+    trip.photos = trip.photos || [];
+    trip.photos.push({ url, note });
+    if (isUserTrip(trip)) {
+      const idx = userTrips.indexOf(trip);
+      if (idx !== -1) { userTrips[idx] = trip; persistUserTrips(); }
+    }
+    photoIndex[tripKey(trip)] = trip.photos.length - 1;
+    popoverBody.innerHTML = renderPopoverBody(trip);
+    bindCarouselEvents();
+    closeAddPhotoModal();
+  });
+
+  /* ===== 全局 ===== */
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.popover') || e.target.closest('.city-pin') || e.target.closest('.city-sidebar') || e.target.closest('.modal') || e.target.closest('.popover-host')) return;
+    closePopover();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target.matches('input, textarea')) return;
+    if (e.key === 'Escape') { closePopover(); closeAddCityModal(); closeAddPhotoModal(); }
+    else if (e.key === 'n' || e.key === 'N') openAddCityModal();
+    else if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !popover.hidden && currentTrip) {
+      const total = (currentTrip.photos || []).length;
+      if (total > 1) {
+        const key = tripKey(currentTrip);
+        photoIndex[key] = e.key === 'ArrowLeft'
+          ? (photoIndex[key] - 1 + total) % total
+          : (photoIndex[key] + 1) % total;
+        popoverBody.innerHTML = renderPopoverBody(currentTrip);
+        bindCarouselEvents();
+      }
+    }
+  });
+
+  /* ===== 小王子开飞机，沿地图缓慢飞行 ===== */
+  const plane = document.querySelector('.prince-plane');
+  if (plane && mapEl) {
+    let angle = 0;
+    const mapRect = () => mapEl.getBoundingClientRect();
+    function animatePlane() {
+      const r = mapRect();
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      const rx = r.width / 2 + 70;
+      const ry = r.height / 2 + 50;
+      angle += 0.0015;   // 很慢
+      const x = cx + rx * Math.cos(angle) - 90;
+      const y = cy + ry * Math.sin(angle) - 90;
+      plane.style.left = x + 'px';
+      plane.style.top = y + 'px';
+      // 飞机朝向轨迹方向
+      plane.style.transform = `rotate(${angle * 180 / Math.PI + 90}deg)`;
+      requestAnimationFrame(animatePlane);
+    }
+    requestAnimationFrame(animatePlane);
+  }
+
+  /* ===== 启动 ===== */
+  loadWorld();
+  loadTrips().then((trips) => {
+    trips.forEach((trip) => { addPin(trip); addListItem(trip); });
+  });
+})();

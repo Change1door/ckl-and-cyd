@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Travel Diary · About</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/map.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌷%3C/text%3E%3C/svg%3E">
+  <style>
+    .about-page { padding: 20px; position: relative; }
+    .about-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+      max-width: 1200px;
+      margin: 30px auto;
+    }
+    @media (max-width: 800px) { .about-grid { grid-template-columns: 1fr; } }
+
+    .about-photo { display: block; }
+    .about-photo img {
+      width: 100%;
+      border: 4px solid #fff;
+      box-shadow: 4px 4px 0 var(--purple-2), 4px 4px 0 2px var(--ink);
+      transform: rotate(-2deg);
+      filter: contrast(1.1) saturate(1.2);
+    }
+
+    .profile-name {
+      font-family: var(--font-mono);
+      font-size: 2.4rem;
+      letter-spacing: 4px;
+      margin-bottom: 4px;
+      text-shadow: 2px 2px 0 #fff;
+    }
+    .profile-handle {
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      color: var(--ink-soft);
+      margin-bottom: 18px;
+    }
+    .profile-bio {
+      font-size: 1.15rem;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+
+    .profile-section { position: relative; }
+    .profile-section h2 {
+      font-family: var(--font-mono);
+      font-size: 1.2rem;
+      letter-spacing: 3px;
+      margin: 18px 0 8px;
+      color: var(--purple-2);
+      border-bottom: 2px dashed var(--pink-2);
+      padding-bottom: 4px;
+    }
+
+    /* ----- 计划 / 已完成 列表 ----- */
+    .todo-list { list-style: none; padding: 0; margin: 0; }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 4px;
+      font-size: 1.05rem;
+      transition: all 0.4s ease;
+      position: relative;
+    }
+
+    /* 爱心勾选框 —— 用 SVG path 画真正爱心 */
+    .todo-check {
+      width: 24px; height: 22px;
+      flex-shrink: 0;
+      border: none;
+      background: none;
+      cursor: none;
+      padding: 0;
+      position: relative;
+    }
+    .todo-check svg {
+      width: 100%; height: 100%;
+      display: block;
+    }
+    .todo-check .heart-outline {
+      fill: none;
+      stroke: var(--ink);
+      stroke-width: 2;
+      transition: fill 0.3s, stroke 0.3s;
+    }
+    .todo-check .check-mark {
+      fill: none;
+      stroke: #fff;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 12;
+      stroke-dashoffset: 12;
+      transition: stroke-dashoffset 0.35s ease;
+    }
+    .todo-item.done .todo-check .heart-outline {
+      fill: #ff5c8d;
+      stroke: #c92f5e;
+    }
+    .todo-item.done .todo-check .check-mark {
+      stroke-dashoffset: 0;
+    }
+    .todo-check:hover .heart-outline {
+      stroke: var(--pink-2);
+      filter: drop-shadow(0 0 4px var(--glow-pink));
+    }
+
+    /* 划掉文字动效 */
+    .todo-text {
+      flex: 1;
+      transition: color 0.35s, text-decoration 0.35s, opacity 0.35s;
+    }
+    .todo-item.done .todo-text {
+      color: var(--ink-soft);
+      text-decoration: line-through;
+      text-decoration-color: var(--pink-2);
+      text-decoration-thickness: 2px;
+    }
+
+    /* 飞到已完成的动效 */
+    .todo-item.flying {
+      animation: flyDown 0.7s ease-in-out forwards;
+    }
+
+    @keyframes flyDown {
+      0%   { opacity: 1; transform: translateY(0) scale(1); }
+      40%  { opacity: 0.6; transform: translateY(20px) scale(0.95); }
+      100% { opacity: 0; transform: translateY(80px) scale(0.8); }
+    }
+
+    .todo-item.appear {
+      animation: appearUp 0.5s ease-out forwards;
+    }
+
+    @keyframes appearUp {
+      0%   { opacity: 0; transform: translateY(-10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 删除小叉叉 */
+    .todo-delete {
+      width: 20px; height: 20px;
+      flex-shrink: 0;
+      border: none;
+      background: none;
+      color: var(--ink-soft);
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      cursor: none;
+      opacity: 0;
+      transition: opacity 0.2s, color 0.2s;
+      line-height: 1;
+      padding: 0;
+    }
+    .todo-item:hover .todo-delete { opacity: 1; }
+    .todo-delete:hover { color: #ff5c8d; transform: scale(1.2); }
+
+    /* 添加输入框 */
+    .todo-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .todo-input {
+      flex: 1;
+      padding: 5px 10px;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      background: rgba(255, 245, 230, 0.7);
+      border: 2px dashed var(--purple-2);
+      border-radius: 6px;
+      color: var(--ink);
+      outline: none;
+    }
+    .todo-input:focus {
+      border-style: solid;
+      border-color: var(--pink-2);
+      box-shadow: 0 0 0 3px var(--glow-pink);
+    }
+    .todo-add-btn {
+      width: 32px; height: 32px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--pink-2), var(--purple-2));
+      border: 2px solid var(--ink);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 1.2rem;
+      cursor: none;
+      box-shadow: 2px 2px 0 var(--shadow);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .todo-add-btn:hover { transform: scale(1.1); box-shadow: 3px 3px 0 var(--pink-2); }
+
+    /* Photo album —— 拍立得卡片 + 删除按钮 */
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 18px;
+      margin-top: 14px;
+    }
+    .gallery-item {
+      position: relative;
+      background: #fff;
+      padding: 6px 6px 32px;
+      border: 2px solid var(--ink);
+      box-shadow: 3px 3px 0 var(--shadow);
+      transform: rotate(-1deg);
+      transition: transform 0.2s;
+      font-family: var(--font-mono);
+    }
+    .gallery-item:nth-child(2n) { transform: rotate(1.5deg); }
+    .gallery-item:nth-child(3n) { transform: rotate(-2deg); }
+    .gallery-item:hover { transform: rotate(0) scale(1.04); z-index: 5; }
+    .gallery-item img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      display: block;
+    }
+    .gallery-item .gallery-caption {
+      font-size: 0.85rem;
+      text-align: center;
+      color: var(--ink-soft);
+      margin-top: 8px;
+    }
+    .gallery-item .gallery-delete {
+      position: absolute;
+      top: 4px; right: 4px;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: #ff5c8d;
+      color: #fff;
+      border: 2px solid var(--ink);
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      line-height: 1;
+      cursor: none;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      box-shadow: 1px 1px 0 var(--ink);
+    }
+    .gallery-item:hover .gallery-delete { display: flex; }
+    .gallery-item .gallery-delete:hover { background: #ff85ad; transform: scale(1.1); }
+    .gallery-add {
+      background: repeating-linear-gradient(45deg, rgba(255,245,230,0.6), rgba(255,245,230,0.6) 8px, rgba(214,184,255,0.18) 8px, rgba(214,184,255,0.18) 16px);
+      border: 3px dashed var(--purple-2);
+      box-shadow: none;
+      cursor: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      letter-spacing: 2px;
+      color: var(--ink-soft);
+      transition: transform 0.2s, background 0.2s;
+    }
+    .gallery-add:hover { transform: rotate(0) scale(1.04); background: rgba(214,184,255,0.25); color: var(--ink); }
+    .gallery-add::before { content: '＋ add photo'; }
+    .map-link {
+      display: inline-block;
+      margin-top: 18px;
+      font-family: var(--font-mono);
+      font-size: 1.2rem;
+    }
+    .modal-label { display: block; margin-bottom: 12px; font-family: var(--font-mono); font-size: 0.95rem; color: var(--ink); }
+    .modal-label input {
+      display: block; width: 100%; margin-top: 4px; padding: 6px 10px;
+      font-family: var(--font-body); font-size: 1rem; background: #fff;
+      border: 2px solid var(--ink); border-radius: 4px; box-sizing: border-box;
+    }
+    .modal-label input:focus { outline: none; border-color: var(--purple-2); box-shadow: 0 0 0 3px var(--glow-pink); }
+
+  </style>
+</head>
+<body>
+  <div class="cursor-trail" id="cursor"></div>
+  <canvas id="confetti-canvas"></canvas>
+
+  <main class="about-page">
+    <header class="map-header">
+      <h1>♡ Our Story Begins <small>2025.2.19</small></h1>
+      <nav>
+        <a href="index.html">home</a>
+        <a href="map.html">map</a>
+      </nav>
+    </header>
+
+    <div class="about-grid">
+      <!-- 左：头像 + 简介 -->
+      <section>
+        <figure class="about-photo">
+          <img src="https://picsum.photos/seed/avatar/320/420" alt="avatar">
+        </figure>
+
+        <div class="profile-section" style="margin-top: 18px;">
+          <h2>🌸 计划</h2>
+          <ul class="todo-list" id="plan-list"></ul>
+          <div class="todo-input-wrap">
+            <input type="text" class="todo-input" id="plan-input" placeholder="写一条旅行计划..." maxlength="60">
+            <button class="todo-add-btn" id="plan-add-btn" type="button">＋</button>
+          </div>
+        </div>
+
+
+        <div class="profile-section">
+          <h2>🎀 已完成</h2>
+          <ul class="todo-list" id="done-list"></ul>
+        </div>
+      </section>
+
+      <!-- 右：文字 + 照片墙 -->
+      <section>
+        <div class="profile-name">Our Diary</div>
+        <div class="profile-handle">@traveler · since 2025</div>
+        <p class="profile-bio">
+          嗨嗨嗨！这里是cyd和ckl的旅行日记
+        </p>
+
+        <div class="profile-section">
+          <h2>photo album</h2>
+          <div class="gallery" id="gallery"></div>
+        </div>
+
+        <a class="map-link retro-btn" href="map.html">see our map →</a>
+      </section>
+    </div>
+  </main>
+
+  <!-- 添加照片 modal -->
+  <div class="modal" id="add-photo-modal" hidden>
+    <div class="win98" style="width: 360px; max-width: 92vw;">
+      <div class="win98__titlebar">
+        <span>add a new photo</span>
+        <div class="win98__titlebar-buttons"><span id="add-photo-close">×</span></div>
+      </div>
+      <div style="padding: 18px;">
+        <form id="add-photo-form">
+          <label class="modal-label">城市 / city <input type="text" name="city" required placeholder="e.g. 上海"></label>
+          <label class="modal-label">年份 / year <input type="number" name="year" required min="1900" max="2100" placeholder="2025"></label>
+          <label class="modal-label">照片链接 / photo URL (可选) <input type="url" name="photo" placeholder="留空自动用 picsum"></label>
+          <div style="display:flex; gap: 10px; margin-top: 14px;">
+            <button type="submit" class="retro-btn" style="font-size: 1rem; padding: 8px 18px;">save</button>
+            <button type="button" class="retro-btn" id="add-photo-cancel" style="font-size: 1rem; padding: 8px 18px; background: #eee;">cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="music-player">
+    <div class="music-player__panel">
+      <button class="music-player__btn" id="music-toggle">▶</button>
+      <div class="music-player__title">
+        now playing
+        <small id="music-name">— nothing yet —</small>
+      </div>
+    </div>
+    <audio id="bgm" loop preload="none"></audio>
+  </div>
+
+  <script src="js/cursor.js"></script>
+  <script src="js/confetti.js"></script>
+  <script src="js/music.js"></script>
+  <script>
+  /* ============================================================
+     1) Todo 列表交互（计划 / 已完成）
+     2) Photo album 交互
+     ============================================================ */
+  (function () {
+    const TODO_KEY = 'about-todos-v1';
+    const PHOTO_KEY = 'about-photos-v1';
+    const planList = document.getElementById('plan-list');
+    const doneList = document.getElementById('done-list');
+    const planInput = document.getElementById('plan-input');
+    const planAddBtn = document.getElementById('plan-add-btn');
+    const gallery = document.getElementById('gallery');
+    const photoModal = document.getElementById('add-photo-modal');
+    const photoModalClose = document.getElementById('add-photo-close');
+    const photoModalCancel = document.getElementById('add-photo-cancel');
+    const photoForm = document.getElementById('add-photo-form');
+
+    /* ==================== Todo 数据 ==================== */
+    // 格式：{ plans: [{text, done: false, id}], completed: [{text, done: true, id}] }
+    function loadTodos() {
+      try {
+        const d = JSON.parse(localStorage.getItem(TODO_KEY));
+        if (d && Array.isArray(d.plans) && Array.isArray(d.completed)) return d;
+      } catch {}
+      // 首次使用：几条默认示例
+      return {
+        plans: [
+          { id: 't1', text: '去冰岛看极光', done: false },
+          { id: 't2', text: '坐一次横跨西伯利亚的火车', done: false },
+          { id: 't3', text: '在清迈学做泰国菜', done: false },
+        ],
+        completed: [
+          { id: 'c1', text: '在巴塞罗那海边看日出', done: true },
+        ]
+      };
+    }
+    function saveTodos(d) { localStorage.setItem(TODO_KEY, JSON.stringify(d)); }
+
+    function uid() { return 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+    function renderTodos() {
+      const d = loadTodos();
+      planList.innerHTML = '';
+      doneList.innerHTML = '';
+
+      d.plans.forEach((item) => {
+        const li = createTodoItem(item, false);
+        planList.appendChild(li);
+      });
+      d.completed.forEach((item) => {
+        const li = createTodoItem(item, true);
+        doneList.appendChild(li);
+      });
+    }
+
+    function createTodoItem(item, isCompleted) {
+      const li = document.createElement('li');
+      li.className = 'todo-item appear';
+      li.dataset.id = item.id;
+
+      // 爱心勾选框：SVG 爱心 + 对勾
+      const check = document.createElement('button');
+      check.className = 'todo-check';
+      check.setAttribute('type', 'button');
+      check.innerHTML = `
+        <svg viewBox="0 0 24 22" xmlns="http://www.w3.org/2000/svg">
+          <path class="heart-outline" d="M12 20.5S1.5 14 1.5 7.5C1.5 4.5 4 2 7 2c2 0 3.5 1 5 3 1.5-2 3-3 5-3 3 0 5.5 2.5 5.5 5.5 0 6.5-10.5 13-10.5 13z"/>
+          <path class="check-mark" d="M7 11l3 3 7-7"/>
+        </svg>`;
+      check.addEventListener('click', () => toggleTodo(item.id));
+
+      // 文字
+      const span = document.createElement('span');
+      span.className = 'todo-text';
+      span.textContent = item.text;
+
+      // 删除 ×
+      const del = document.createElement('button');
+      del.className = 'todo-delete';
+      del.textContent = '×';
+      del.setAttribute('type', 'button');
+      del.addEventListener('click', () => deleteTodo(item.id));
+
+      if (item.done) li.classList.add('done');
+
+      li.appendChild(check);
+      li.appendChild(span);
+      li.appendChild(del);
+      return li;
+    }
+
+    function toggleTodo(id) {
+      const d = loadTodos();
+      // 找是在 plan 还是 completed
+      const planIdx = d.plans.findIndex((x) => x.id === id);
+      if (planIdx !== -1) {
+        const item = d.plans[planIdx];
+        // 打勾 + 划掉动效
+        const li = planList.querySelector(`[data-id="${id}"]`);
+        if (li) {
+          li.classList.add('done');
+          li.querySelector('.todo-check').textContent = '✓';
+          // 等待划掉动效，然后飞到已完成
+          setTimeout(() => {
+            li.classList.add('flying');
+            setTimeout(() => {
+              // 移动到已完成
+              item.done = true;
+              d.plans.splice(planIdx, 1);
+              d.completed.unshift(item);
+              saveTodos(d);
+              renderTodos();
+            }, 500);
+          }, 600);
+        }
+        return;
+      }
+      // 在 completed 里？不变
+    }
+
+    function deleteTodo(id) {
+      const d = loadTodos();
+      const fromPlan = d.plans.findIndex((x) => x.id === id);
+      const fromDone = d.completed.findIndex((x) => x.id === id);
+      let text = '';
+      if (fromPlan !== -1) { text = d.plans[fromPlan].text; d.plans.splice(fromPlan, 1); }
+      if (fromDone !== -1) { text = d.completed[fromDone].text; d.completed.splice(fromDone, 1); }
+      if (!text) return;
+      if (!confirm(`删除「${text}」？`)) return;
+      saveTodos(d);
+      renderTodos();
+    }
+
+    function addPlan() {
+      const text = planInput.value.trim();
+      if (!text) return;
+      const d = loadTodos();
+      d.plans.push({ id: uid(), text, done: false });
+      saveTodos(d);
+      planInput.value = '';
+      renderTodos();
+    }
+
+    planAddBtn.addEventListener('click', addPlan);
+    planInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') addPlan();
+    });
+
+    /* ==================== Photo album ==================== */
+    const DEFAULT_PHOTOS = [
+      { city: '东京',   year: '2024', src: 'https://picsum.photos/seed/p1/300/300' },
+      { city: '里斯本', year: '2023', src: 'https://picsum.photos/seed/p2/300/300' },
+      { city: '台北',   year: '2024', src: 'https://picsum.photos/seed/p3/300/300' },
+      { city: '岘港',   year: '2023', src: 'https://picsum.photos/seed/p4/300/300' },
+      { city: '上海',   year: '2022', src: 'https://picsum.photos/seed/p5/300/300' },
+      { city: '成都',   year: '2024', src: 'https://picsum.photos/seed/p6/300/300' },
+    ];
+
+    function loadPhotos() {
+      try { const s = JSON.parse(localStorage.getItem(PHOTO_KEY) || 'null'); if (Array.isArray(s) && s.length) return s; } catch {}
+      localStorage.setItem(PHOTO_KEY, JSON.stringify(DEFAULT_PHOTOS));
+      return DEFAULT_PHOTOS.slice();
+    }
+    function savePhotos(photos) { localStorage.setItem(PHOTO_KEY, JSON.stringify(photos)); }
+
+    function renderGallery() {
+      const photos = loadPhotos();
+      gallery.innerHTML = '';
+      photos.forEach((p, i) => {
+        const fig = document.createElement('figure');
+        fig.className = 'gallery-item';
+        fig.innerHTML = `<button class="gallery-delete" data-i="${i}" title="删除">×</button><img src="${p.src}" alt="${p.city}" loading="lazy"><div class="gallery-caption">${p.city} · ${p.year}</div>`;
+        gallery.appendChild(fig);
+      });
+      const add = document.createElement('figure');
+      add.className = 'gallery-item gallery-add';
+      add.id = 'gallery-add';
+      gallery.appendChild(add);
+      bindGallery();
+    }
+
+    function bindGallery() {
+      gallery.querySelectorAll('.gallery-delete').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const i = parseInt(btn.dataset.i, 10);
+          const photos = loadPhotos();
+          const p = photos[i];
+          if (!p) return;
+          if (!confirm(`删除「${p.city} · ${p.year}」这张照片？`)) return;
+          photos.splice(i, 1);
+          savePhotos(photos);
+          renderGallery();
+        });
+      });
+      const addBtn = document.getElementById('gallery-add');
+      addBtn && addBtn.addEventListener('click', () => openPhotoModal());
+    }
+
+    function openPhotoModal() { photoModal.hidden = false; photoForm.reset(); }
+    function closePhotoModal() { photoModal.hidden = true; }
+
+    photoModalClose && photoModalClose.addEventListener('click', closePhotoModal);
+    photoModalCancel && photoModalCancel.addEventListener('click', closePhotoModal);
+    photoModal && photoModal.addEventListener('click', (e) => { if (e.target === photoModal) closePhotoModal(); });
+
+    photoForm && photoForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const fd = new FormData(photoForm);
+      const city = fd.get('city').trim();
+      const year = fd.get('year').toString().trim();
+      const userUrl = fd.get('photo').trim();
+      if (!city || !year) { alert('请填写城市和年份'); return; }
+      const seed = encodeURIComponent(city + year + Math.random().toString(36).slice(2, 6));
+      const src = userUrl || `https://picsum.photos/seed/${seed}/300/300`;
+      const photos = loadPhotos();
+      photos.push({ city, year, src });
+      savePhotos(photos);
+      renderGallery();
+      closePhotoModal();
+    });
+
+    /* ==================== 启动 ==================== */
+    renderTodos();
+    renderGallery();
+  })();
+  </script>
+</body>
+</html>

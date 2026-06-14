@@ -1,0 +1,276 @@
+/* ============================================================
+   Travel Diary · Y2K / Cartoon aesthetic
+   全局基础：配色 / 字体 / VHS 滤镜 / 通用元件
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&family=Patrick+Hand&display=swap');
+
+:root {
+  --pink-1: #ffd6e8;
+  --pink-2: #ffb3d1;
+  --purple-1: #d6b8ff;
+  --purple-2: #b399ff;
+  --sky-1: #b3e0ff;
+  --sky-2: #80c4ff;
+  --cream: #fff5e6;
+  --cream-2: #ffe8d6;
+  --ink: #4a3b5c;
+  --ink-soft: #6b5b7d;
+  --shadow: rgba(74, 59, 92, 0.25);
+  --glow-pink: rgba(255, 182, 219, 0.8);
+  --glow-purple: rgba(179, 153, 255, 0.8);
+
+  --font-mono: 'VT323', 'Courier New', monospace;
+  --font-pixel: 'Press Start 2P', 'VT323', monospace;
+  --font-hand: 'Patrick Hand', 'Comic Sans MS', cursive;
+  --font-body: 'Patrick Hand', 'VT323', cursive;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  font-family: var(--font-body);
+  color: var(--ink);
+  cursor: none; /* 用流星光标替代默认 */
+}
+
+body {
+  background:
+    radial-gradient(ellipse at 20% 10%, var(--pink-1) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, var(--purple-1) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, var(--cream) 0%, transparent 60%),
+    linear-gradient(180deg, #ffd6e8 0%, #d6b8ff 40%, #fff5e6 100%);
+  min-height: 100vh;
+  position: relative;
+}
+
+/* ----- VHS / 老电视扫描线全局滤镜 ----- */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9990;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.08) 0px,
+      rgba(0, 0, 0, 0.08) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  mix-blend-mode: multiply;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9991;
+  background:
+    radial-gradient(ellipse at center, transparent 50%, rgba(74, 59, 92, 0.18) 100%);
+  animation: vhsFlicker 4s infinite;
+}
+
+@keyframes vhsFlicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+  92% { opacity: 0.7; }
+}
+
+/* ----- 通用复古按钮 ----- */
+.retro-btn {
+  font-family: var(--font-mono);
+  font-size: 1.6rem;
+  letter-spacing: 2px;
+  padding: 14px 38px;
+  background: linear-gradient(180deg, #fff5e6 0%, #ffe8d6 100%);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 4px;
+  box-shadow:
+    4px 4px 0 var(--purple-2),
+    4px 4px 0 1px var(--ink);
+  cursor: none;
+  position: relative;
+  transition: transform 0.15s, box-shadow 0.15s;
+  text-transform: uppercase;
+}
+
+.retro-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow:
+    6px 6px 0 var(--pink-2),
+    6px 6px 0 1px var(--ink);
+}
+
+.retro-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow:
+    2px 2px 0 var(--purple-2),
+    2px 2px 0 1px var(--ink);
+}
+
+/* ----- Win98 风小窗口 ----- */
+.win98 {
+  background: #fff5e6;
+  border: 2px solid var(--ink);
+  box-shadow:
+    inset 1px 1px 0 #fff,
+    inset -1px -1px 0 #b39d8a,
+    4px 4px 0 var(--shadow);
+  border-radius: 2px;
+}
+
+.win98__titlebar {
+  background: linear-gradient(90deg, var(--purple-2) 0%, var(--pink-2) 100%);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  padding: 4px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--ink);
+}
+
+.win98__titlebar-buttons { display: flex; gap: 2px; }
+.win98__titlebar-buttons span {
+  width: 16px; height: 14px;
+  background: #fff5e6;
+  border: 1px solid var(--ink);
+  display: inline-block;
+  font-size: 10px;
+  text-align: center;
+  line-height: 12px;
+  color: var(--ink);
+}
+
+/* ----- 流星光标 ----- */
+.cursor-trail {
+  position: fixed;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+  z-index: 9999;
+  background: radial-gradient(circle, #fff 0%, var(--glow-pink) 40%, transparent 70%);
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.3s;
+  box-shadow: 0 0 12px var(--glow-purple), 0 0 24px var(--glow-pink);
+}
+
+.cursor-star {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9998;
+  font-size: 18px;
+  transform: translate(-50%, -50%);
+  animation: cursorStarFade 1s forwards;
+}
+
+@keyframes cursorStarFade {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: translate(-50%, -150%) scale(0.4) rotate(180deg); }
+}
+
+/* ----- Emoji 飘落粒子画布 ----- */
+#confetti-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9000;
+}
+
+/* ----- 浮动装饰贴纸 ----- */
+.sticker {
+  position: fixed;
+  font-size: 2.4rem;
+  pointer-events: none;
+  z-index: 50;
+  filter: drop-shadow(2px 2px 0 var(--shadow));
+  animation: floatY 6s ease-in-out infinite;
+}
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-14px) rotate(4deg); }
+}
+
+/* ----- 弹跳 +1 表情 ----- */
+.pop-emoji {
+  position: fixed;
+  pointer-events: none;
+  font-size: 2rem;
+  z-index: 9500;
+  animation: popEmoji 1.2s forwards;
+}
+
+@keyframes popEmoji {
+  0% { opacity: 1; transform: translate(-50%, 0) scale(0.6) rotate(0deg); }
+  60% { opacity: 1; transform: translate(-50%, -60px) scale(1.2) rotate(20deg); }
+  100% { opacity: 0; transform: translate(-50%, -120px) scale(0.8) rotate(-10deg); }
+}
+
+/* ----- 复古音乐播放器 ----- */
+.music-player {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9700;
+  font-family: var(--font-mono);
+}
+
+.music-player__panel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #fff5e6;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  box-shadow: 3px 3px 0 var(--purple-2);
+  font-size: 1.1rem;
+}
+
+.music-player__btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--pink-1) 0%, var(--purple-1) 100%);
+  border: 2px solid var(--ink);
+  cursor: none;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.music-player__title {
+  color: var(--ink);
+  letter-spacing: 1px;
+  min-width: 120px;
+}
+
+.music-player__title small {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--ink-soft);
+}
+
+/* ----- 通用工具 ----- */
+.center-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+a { color: var(--ink); text-decoration: none; border-bottom: 1px dashed var(--purple-2); }
+a:hover { color: var(--pink-2); }

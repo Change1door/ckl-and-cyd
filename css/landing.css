@@ -1,0 +1,726 @@
+/* ============================================================
+   Landing 页样式
+   ============================================================ */
+
+/* ----- 全屏背景图 ----- */
+.landing {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.landing::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: url('../assets/stickers/landing-bg.jpg') center / cover no-repeat;
+  filter: brightness(0.7) saturate(0.9);
+}
+
+/* ----- 像素配色 ----- */
+:root {
+  --skin: #f5c9a0;
+  --skin-shadow: #d9a878;
+  --hair-boy: #3b5d8a;
+  --hair-boy-light: #5a7fb3;
+  --shirt-boy: #4a8bd6;
+  --shirt-boy-dark: #2f6ab0;
+  --pants-boy: #5b3e8a;
+  --shoes-boy: #2a1f3d;
+  --hair-girl: #ff6fa3;
+  --hair-girl-light: #ff9bc4;
+  --dress: #ff5c8d;
+  --dress-light: #ff85ad;
+  --dress-dark: #d63d6e;
+  --sock: #fff5e6;
+  --shoes-girl: #c92f5e;
+  --ink-pixel: #2a1f3d;
+}
+
+.pixel-people {
+  position: relative;
+  width: 100%;
+  max-width: 540px;
+  height: 130px;
+  margin: 18px auto 30px;
+}
+
+/* 放大版：单像素 4px（小人明显更大，更精细） */
+.pixel-people--big {
+  --px: 4px;
+  max-width: 700px;
+  height: 170px;
+  margin: 26px auto 36px;
+}
+
+.pixel-people__ground {
+  position: absolute;
+  bottom: 6px;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: repeating-linear-gradient(90deg, #8bc48b 0 8px, #6fa86f 8px 16px);
+  border-top: 2px solid var(--ink-pixel);
+  box-shadow: 0 4px 0 rgba(74, 59, 92, 0.15);
+}
+
+.pixel-people__track {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  height: 120px;
+}
+
+.pixel-people__couple {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: flex-end;
+  image-rendering: pixelated;
+}
+
+.pixel-people__couple.walking .pixel-person--boy  { animation: pixelWalkBoy  0.5s steps(2) infinite; }
+.pixel-people__couple.walking .pixel-person--girl { animation: pixelWalkGirl 0.5s steps(2) infinite; }
+
+@keyframes pixelWalkBoy  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
+@keyframes pixelWalkGirl { 0%,100%{transform:translateY(-3px)} 50%{transform:translateY(0)} }
+
+/* ----- 像素小人：sprite 用 ::before / ::after 画整张图 -----
+   每个像素 = var(--px) px（默认 2px），逐像素用 box-shadow 偏移叠加
+   小人的实际 width = 列数 × --px，height = 行数 × --px
+   男孩：14 列 × 17 行；女孩：14 列 × 19 行（含 2 行辫子）
+   用固定 px 值（不要 calc，因 CSS 变量在 calc 里有时浏览器解析失败） */
+.pixel-person {
+  position: relative;
+  width: 56px;     /* 14 × 4px（--px 默认 2px 或 .pixel-people--big 里 4px） */
+  height: 76px;    /* 19 × 4px */
+  flex-shrink: 0;
+}
+
+/* 小尺寸版本（如果 --px 是 2px） */
+.pixel-people:not(.pixel-people--big) .pixel-person {
+  width: 28px;     /* 14 × 2px */
+  height: 38px;    /* 19 × 2px */
+}
+
+.pixel-person::before { content: ''; position: absolute; }
+.pixel-person::after  { content: ''; position: absolute; }
+
+/* ============================================================
+   小男孩：14 列 × 17 行
+   ============================================================ */
+.pixel-person--boy::before {
+  top: 0; left: 0;
+  width: var(--px, 2px); height: var(--px, 2px);
+  background: var(--ink-pixel);
+  box-shadow:
+    /* 行 0 —— 顶部刘海 */
+    1px 0px 0 0 var(--hair-boy),
+    3px 0px 0 0 var(--hair-boy),
+    5px 0px 0 0 var(--hair-boy),
+    7px 0px 0 0 var(--hair-boy),
+    9px 0px 0 0 var(--hair-boy),
+    11px 0px 0 0 var(--hair-boy),
+    13px 0px 0 0 var(--hair-boy),
+    15px 0px 0 0 var(--hair-boy),
+    17px 0px 0 0 var(--hair-boy),
+    19px 0px 0 0 var(--hair-boy),
+    21px 0px 0 0 var(--hair-boy),
+    23px 0px 0 0 var(--hair-boy),
+    /* 行 1 —— 头发亮面 */
+    1px 2px 0 0 var(--hair-boy),
+    3px 2px 0 0 var(--hair-boy-light),
+    5px 2px 0 0 var(--hair-boy),
+    7px 2px 0 0 var(--hair-boy-light),
+    9px 2px 0 0 var(--hair-boy),
+    11px 2px 0 0 var(--hair-boy-light),
+    13px 2px 0 0 var(--hair-boy),
+    15px 2px 0 0 var(--hair-boy-light),
+    17px 2px 0 0 var(--hair-boy),
+    19px 2px 0 0 var(--hair-boy-light),
+    21px 2px 0 0 var(--hair-boy),
+    23px 2px 0 0 var(--hair-boy),
+    /* 行 2 —— 刘海覆盖到眉毛上 */
+    1px 4px 0 0 var(--hair-boy),
+    3px 4px 0 0 var(--skin),
+    5px 4px 0 0 var(--hair-boy),
+    7px 4px 0 0 var(--skin),
+    9px 4px 0 0 var(--hair-boy),
+    11px 4px 0 0 var(--skin),
+    13px 4px 0 0 var(--hair-boy),
+    15px 4px 0 0 var(--skin),
+    17px 4px 0 0 var(--hair-boy),
+    19px 4px 0 0 var(--skin),
+    21px 4px 0 0 var(--hair-boy),
+    23px 4px 0 0 var(--hair-boy),
+    /* 行 3 —— 脸 */
+    1px 6px 0 0 var(--skin),
+    3px 6px 0 0 var(--skin),
+    5px 6px 0 0 var(--skin),
+    7px 6px 0 0 var(--skin),
+    9px 6px 0 0 var(--skin),
+    11px 6px 0 0 var(--skin),
+    13px 6px 0 0 var(--skin),
+    15px 6px 0 0 var(--skin),
+    17px 6px 0 0 var(--skin),
+    19px 6px 0 0 var(--skin),
+    21px 6px 0 0 var(--skin),
+    23px 6px 0 0 var(--skin),
+    /* 行 4 —— 眼睛 */
+    1px 8px 0 0 var(--skin),
+    3px 8px 0 0 var(--skin),
+    5px 8px 0 0 var(--ink-pixel),
+    7px 8px 0 0 var(--skin),
+    9px 8px 0 0 var(--skin),
+    11px 8px 0 0 var(--skin),
+    13px 8px 0 0 var(--skin),
+    15px 8px 0 0 var(--skin),
+    17px 8px 0 0 var(--skin),
+    19px 8px 0 0 var(--ink-pixel),
+    21px 8px 0 0 var(--skin),
+    23px 8px 0 0 var(--skin),
+    /* 行 5 —— 腮红 + 眼白高光 */
+    1px 10px 0 0 var(--skin),
+    3px 10px 0 0 var(--ink-pixel),
+    5px 10px 0 0 var(--skin),
+    7px 10px 0 0 var(--skin),
+    9px 10px 0 0 #ff9999,
+    11px 10px 0 0 var(--skin),
+    13px 10px 0 0 var(--skin),
+    15px 10px 0 0 var(--skin),
+    17px 10px 0 0 #ff9999,
+    19px 10px 0 0 var(--skin),
+    21px 10px 0 0 var(--skin),
+    23px 10px 0 0 var(--skin),
+    /* 行 6 —— 鼻子 */
+    1px 12px 0 0 var(--skin),
+    3px 12px 0 0 var(--skin),
+    5px 12px 0 0 var(--skin-shadow),
+    7px 12px 0 0 var(--skin),
+    9px 12px 0 0 var(--skin),
+    11px 12px 0 0 var(--skin),
+    13px 12px 0 0 var(--skin),
+    15px 12px 0 0 var(--skin),
+    17px 12px 0 0 var(--skin-shadow),
+    19px 12px 0 0 var(--skin),
+    21px 12px 0 0 var(--skin),
+    23px 12px 0 0 var(--skin),
+    /* 行 7 —— 嘴 */
+    1px 14px 0 0 var(--skin),
+    3px 14px 0 0 var(--skin),
+    5px 14px 0 0 var(--skin),
+    7px 14px 0 0 var(--dress-dark),
+    9px 14px 0 0 var(--dress-dark),
+    11px 14px 0 0 var(--skin),
+    13px 14px 0 0 var(--skin),
+    15px 14px 0 0 var(--skin),
+    17px 14px 0 0 var(--skin),
+    19px 14px 0 0 var(--skin),
+    21px 14px 0 0 var(--skin),
+    23px 14px 0 0 var(--skin),
+    /* 行 8 —— 脖子 */
+    3px 16px 0 0 var(--skin-shadow),
+    5px 16px 0 0 var(--skin-shadow),
+    7px 16px 0 0 var(--skin-shadow),
+    9px 16px 0 0 var(--skin-shadow),
+    11px 16px 0 0 var(--skin-shadow),
+    13px 16px 0 0 var(--skin-shadow),
+    15px 16px 0 0 var(--skin-shadow),
+    17px 16px 0 0 var(--skin-shadow),
+    19px 16px 0 0 var(--skin-shadow),
+    21px 16px 0 0 var(--skin-shadow),
+    /* 行 9 —— 衬衫领口 */
+    1px 18px 0 0 var(--shirt-boy),
+    3px 18px 0 0 var(--shirt-boy),
+    5px 18px 0 0 var(--shirt-boy-dark),
+    7px 18px 0 0 var(--shirt-boy),
+    9px 18px 0 0 var(--shirt-boy),
+    11px 18px 0 0 var(--shirt-boy),
+    13px 18px 0 0 var(--shirt-boy),
+    15px 18px 0 0 var(--shirt-boy),
+    17px 18px 0 0 var(--shirt-boy),
+    19px 18px 0 0 var(--shirt-boy-dark),
+    21px 18px 0 0 var(--shirt-boy),
+    23px 18px 0 0 var(--shirt-boy),
+    /* 行 10 —— 衬衫身 */
+    1px 20px 0 0 var(--shirt-boy-dark),
+    3px 20px 0 0 var(--shirt-boy),
+    5px 20px 0 0 var(--shirt-boy),
+    7px 20px 0 0 var(--shirt-boy),
+    9px 20px 0 0 var(--shirt-boy),
+    11px 20px 0 0 var(--shirt-boy),
+    13px 20px 0 0 var(--shirt-boy),
+    15px 20px 0 0 var(--shirt-boy),
+    17px 20px 0 0 var(--shirt-boy),
+    19px 20px 0 0 var(--shirt-boy),
+    21px 20px 0 0 var(--shirt-boy),
+    23px 20px 0 0 var(--shirt-boy-dark),
+    /* 行 11 —— 衬衫 + 手臂 */
+    -1px 22px 0 0 var(--skin),
+    1px 22px 0 0 var(--shirt-boy),
+    3px 22px 0 0 var(--shirt-boy),
+    5px 22px 0 0 var(--shirt-boy),
+    7px 22px 0 0 var(--shirt-boy),
+    9px 22px 0 0 var(--shirt-boy),
+    11px 22px 0 0 var(--shirt-boy),
+    13px 22px 0 0 var(--shirt-boy),
+    15px 22px 0 0 var(--shirt-boy),
+    17px 22px 0 0 var(--shirt-boy),
+    19px 22px 0 0 var(--shirt-boy),
+    21px 22px 0 0 var(--shirt-boy),
+    23px 22px 0 0 var(--shirt-boy),
+    25px 22px 0 0 var(--skin),
+    /* 行 12 —— 手 */
+    -1px 24px 0 0 var(--skin),
+    1px 24px 0 0 var(--skin),
+    3px 24px 0 0 var(--skin),
+    5px 24px 0 0 var(--skin),
+    7px 24px 0 0 var(--skin),
+    9px 24px 0 0 var(--skin),
+    11px 24px 0 0 var(--skin),
+    13px 24px 0 0 var(--skin),
+    15px 24px 0 0 var(--skin),
+    17px 24px 0 0 var(--skin),
+    19px 24px 0 0 var(--skin),
+    21px 24px 0 0 var(--skin),
+    23px 24px 0 0 var(--skin),
+    25px 24px 0 0 var(--skin-shadow),
+    /* 行 13 —— 腰带 */
+    1px 26px 0 0 var(--pants-boy),
+    3px 26px 0 0 var(--pants-boy),
+    5px 26px 0 0 var(--pants-boy),
+    7px 26px 0 0 var(--pants-boy),
+    9px 26px 0 0 var(--pants-boy),
+    11px 26px 0 0 var(--pants-boy),
+    13px 26px 0 0 var(--pants-boy),
+    15px 26px 0 0 var(--pants-boy),
+    17px 26px 0 0 var(--pants-boy),
+    19px 26px 0 0 var(--pants-boy),
+    21px 26px 0 0 var(--pants-boy),
+    23px 26px 0 0 var(--pants-boy),
+    /* 行 14 —— 裤 */
+    1px 28px 0 0 var(--pants-boy),
+    3px 28px 0 0 var(--pants-boy),
+    5px 28px 0 0 var(--pants-boy),
+    7px 28px 0 0 var(--pants-boy),
+    9px 28px 0 0 var(--pants-boy),
+    11px 28px 0 0 var(--pants-boy),
+    13px 28px 0 0 var(--pants-boy),
+    15px 28px 0 0 var(--pants-boy),
+    17px 28px 0 0 var(--pants-boy),
+    19px 28px 0 0 var(--pants-boy),
+    21px 28px 0 0 var(--pants-boy),
+    23px 28px 0 0 var(--pants-boy),
+    /* 行 15 —— 鞋 */
+    1px 30px 0 0 var(--shoes-boy),
+    3px 30px 0 0 var(--shoes-boy),
+    5px 30px 0 0 var(--shoes-boy),
+    7px 30px 0 0 var(--shoes-boy),
+    9px 30px 0 0 var(--shoes-boy),
+    11px 30px 0 0 var(--shoes-boy),
+    13px 30px 0 0 var(--shoes-boy),
+    15px 30px 0 0 var(--shoes-boy),
+    17px 30px 0 0 var(--shoes-boy),
+    19px 30px 0 0 var(--shoes-boy),
+    21px 30px 0 0 var(--shoes-boy),
+    23px 30px 0 0 var(--shoes-boy),
+    /* 行 16 —— 鞋底 */
+    -1px 32px 0 0 var(--shoes-boy),
+    1px 32px 0 0 var(--shoes-boy),
+    3px 32px 0 0 var(--shoes-boy),
+    5px 32px 0 0 var(--shoes-boy),
+    7px 32px 0 0 var(--shoes-boy),
+    9px 32px 0 0 var(--shoes-boy),
+    11px 32px 0 0 var(--shoes-boy),
+    13px 32px 0 0 var(--shoes-boy),
+    15px 32px 0 0 var(--shoes-boy),
+    17px 32px 0 0 var(--shoes-boy),
+    19px 32px 0 0 var(--shoes-boy),
+    21px 32px 0 0 var(--shoes-boy),
+    23px 32px 0 0 var(--shoes-boy),
+    25px 32px 0 0 var(--shoes-boy);
+}
+
+/* ============================================================
+   小女孩：14 列 × 19 行（含两根辫子向上伸出 2 行）
+   ============================================================ */
+.pixel-person--girl::after {
+  top: 0; left: 0;
+  width: var(--px, 2px); height: var(--px, 2px);
+  background: var(--ink-pixel);
+  box-shadow:
+    /* —— 辫子顶端（向左 / 向右）—— */
+    -1px -4px 0 0 var(--hair-girl),
+    1px -4px 0 0 var(--hair-girl),
+    -1px -2px 0 0 var(--hair-girl),
+    1px -2px 0 0 var(--hair-girl-light),
+    21px -4px 0 0 var(--hair-girl),
+    23px -4px 0 0 var(--hair-girl),
+    21px -2px 0 0 var(--hair-girl-light),
+    23px -2px 0 0 var(--hair-girl),
+    /* —— 辫子向下延伸（左右各）—— */
+    -1px 0px 0 0 var(--hair-girl),
+    1px 0px 0 0 var(--hair-girl),
+    21px 0px 0 0 var(--hair-girl),
+    23px 0px 0 0 var(--hair-girl),
+    -1px 2px 0 0 var(--hair-girl),
+    1px 2px 0 0 var(--hair-girl-light),
+    21px 2px 0 0 var(--hair-girl-light),
+    23px 2px 0 0 var(--hair-girl),
+    -1px 4px 0 0 var(--hair-girl),
+    1px 4px 0 0 var(--hair-girl),
+    21px 4px 0 0 var(--hair-girl),
+    23px 4px 0 0 var(--hair-girl),
+    -1px 6px 0 0 var(--hair-girl),
+    1px 6px 0 0 var(--hair-girl),
+    21px 6px 0 0 var(--hair-girl),
+    23px 6px 0 0 var(--hair-girl),
+    -1px 8px 0 0 var(--hair-girl),
+    1px 8px 0 0 var(--hair-girl-light),
+    21px 8px 0 0 var(--hair-girl-light),
+    23px 8px 0 0 var(--hair-girl),
+    -1px 10px 0 0 var(--hair-girl),
+    1px 10px 0 0 var(--hair-girl),
+    21px 10px 0 0 var(--hair-girl),
+    23px 10px 0 0 var(--hair-girl),
+    /* —— 头顶中央头发（行 0）—— */
+    3px 0px 0 0 var(--hair-girl),
+    5px 0px 0 0 var(--hair-girl),
+    7px 0px 0 0 var(--hair-girl),
+    9px 0px 0 0 var(--hair-girl),
+    11px 0px 0 0 var(--hair-girl),
+    13px 0px 0 0 var(--hair-girl),
+    15px 0px 0 0 var(--hair-girl),
+    17px 0px 0 0 var(--hair-girl),
+    19px 0px 0 0 var(--hair-girl),
+    /* 行 1 —— 头顶亮面 */
+    3px 2px 0 0 var(--hair-girl),
+    5px 2px 0 0 var(--hair-girl-light),
+    7px 2px 0 0 var(--hair-girl),
+    9px 2px 0 0 var(--hair-girl-light),
+    11px 2px 0 0 var(--hair-girl),
+    13px 2px 0 0 var(--hair-girl-light),
+    15px 2px 0 0 var(--hair-girl),
+    17px 2px 0 0 var(--hair-girl-light),
+    19px 2px 0 0 var(--hair-girl),
+    /* 行 2 —— 刘海 */
+    3px 4px 0 0 var(--skin),
+    5px 4px 0 0 var(--hair-girl),
+    7px 4px 0 0 var(--hair-girl),
+    9px 4px 0 0 var(--hair-girl),
+    11px 4px 0 0 var(--hair-girl),
+    13px 4px 0 0 var(--hair-girl),
+    15px 4px 0 0 var(--hair-girl),
+    17px 4px 0 0 var(--hair-girl),
+    19px 4px 0 0 var(--skin),
+    /* 行 3 —— 脸 */
+    3px 6px 0 0 var(--skin),
+    5px 6px 0 0 var(--skin),
+    7px 6px 0 0 var(--skin),
+    9px 6px 0 0 var(--skin),
+    11px 6px 0 0 var(--skin),
+    13px 6px 0 0 var(--skin),
+    15px 6px 0 0 var(--skin),
+    17px 6px 0 0 var(--skin),
+    19px 6px 0 0 var(--skin),
+    /* 行 4 —— 眉 */
+    3px 8px 0 0 var(--ink-pixel),
+    5px 8px 0 0 var(--skin),
+    7px 8px 0 0 var(--skin),
+    9px 8px 0 0 var(--skin),
+    11px 8px 0 0 var(--skin),
+    13px 8px 0 0 var(--skin),
+    15px 8px 0 0 var(--skin),
+    17px 8px 0 0 var(--skin),
+    19px 8px 0 0 var(--ink-pixel),
+    /* 行 5 —— 眼睛 */
+    3px 10px 0 0 var(--ink-pixel),
+    5px 10px 0 0 var(--ink-pixel),
+    7px 10px 0 0 var(--skin),
+    9px 10px 0 0 var(--skin),
+    11px 10px 0 0 var(--skin),
+    13px 10px 0 0 var(--skin),
+    15px 10px 0 0 var(--skin),
+    17px 10px 0 0 var(--ink-pixel),
+    19px 10px 0 0 var(--ink-pixel),
+    /* 行 6 —— 腮红 */
+    3px 12px 0 0 var(--skin),
+    5px 12px 0 0 #ff9999,
+    7px 12px 0 0 var(--skin),
+    9px 12px 0 0 var(--skin),
+    11px 12px 0 0 var(--skin),
+    13px 12px 0 0 var(--skin),
+    15px 12px 0 0 var(--skin),
+    17px 12px 0 0 #ff9999,
+    19px 12px 0 0 var(--skin),
+    /* 行 7 —— 嘴 */
+    3px 14px 0 0 var(--skin),
+    5px 14px 0 0 var(--skin),
+    7px 14px 0 0 var(--dress-dark),
+    9px 14px 0 0 var(--dress-dark),
+    11px 14px 0 0 var(--dress-dark),
+    13px 14px 0 0 var(--dress-dark),
+    15px 14px 0 0 var(--skin),
+    17px 14px 0 0 var(--skin),
+    19px 14px 0 0 var(--skin),
+    /* 行 8 —— 脖子 */
+    5px 16px 0 0 var(--skin-shadow),
+    7px 16px 0 0 var(--skin-shadow),
+    9px 16px 0 0 var(--skin-shadow),
+    11px 16px 0 0 var(--skin-shadow),
+    13px 16px 0 0 var(--skin-shadow),
+    15px 16px 0 0 var(--skin-shadow),
+    17px 16px 0 0 var(--skin-shadow),
+    /* 行 9 —— 连衣裙上身 */
+    1px 18px 0 0 var(--dress),
+    3px 18px 0 0 var(--dress-light),
+    5px 18px 0 0 var(--dress),
+    7px 18px 0 0 var(--dress),
+    9px 18px 0 0 var(--dress),
+    11px 18px 0 0 var(--dress),
+    13px 18px 0 0 var(--dress),
+    15px 18px 0 0 var(--dress),
+    17px 18px 0 0 var(--dress),
+    19px 18px 0 0 var(--dress),
+    21px 18px 0 0 var(--dress-light),
+    23px 18px 0 0 var(--dress),
+    /* 行 10 —— 腰间蝴蝶结阴影 */
+    1px 20px 0 0 var(--dress),
+    3px 20px 0 0 var(--dress),
+    5px 20px 0 0 var(--dress-dark),
+    7px 20px 0 0 var(--dress-light),
+    9px 20px 0 0 var(--dress-dark),
+    11px 20px 0 0 var(--dress),
+    13px 20px 0 0 var(--dress-dark),
+    15px 20px 0 0 var(--dress-light),
+    17px 20px 0 0 var(--dress-dark),
+    19px 20px 0 0 var(--dress),
+    21px 20px 0 0 var(--dress),
+    23px 20px 0 0 var(--dress),
+    /* 行 11 —— 裙摆 + 双手 */
+    -1px 22px 0 0 var(--skin),
+    1px 22px 0 0 var(--dress),
+    3px 22px 0 0 var(--dress-light),
+    5px 22px 0 0 var(--dress),
+    7px 22px 0 0 var(--dress),
+    9px 22px 0 0 var(--dress),
+    11px 22px 0 0 var(--dress),
+    13px 22px 0 0 var(--dress),
+    15px 22px 0 0 var(--dress),
+    17px 22px 0 0 var(--dress),
+    19px 22px 0 0 var(--dress-light),
+    21px 22px 0 0 var(--dress),
+    23px 22px 0 0 var(--dress),
+    25px 22px 0 0 var(--skin),
+    /* 行 12 —— 裙摆加宽 */
+    -3px 24px 0 0 var(--dress),
+    -1px 24px 0 0 var(--dress-light),
+    1px 24px 0 0 var(--dress),
+    3px 24px 0 0 var(--dress),
+    5px 24px 0 0 var(--dress),
+    7px 24px 0 0 var(--dress),
+    9px 24px 0 0 var(--dress),
+    11px 24px 0 0 var(--dress),
+    13px 24px 0 0 var(--dress),
+    15px 24px 0 0 var(--dress),
+    17px 24px 0 0 var(--dress),
+    19px 24px 0 0 var(--dress),
+    21px 24px 0 0 var(--dress),
+    23px 24px 0 0 var(--dress-light),
+    25px 24px 0 0 var(--dress),
+    27px 24px 0 0 var(--dress),
+    /* 行 13 —— 裙摆最宽 */
+    -5px 26px 0 0 var(--dress-dark),
+    -3px 26px 0 0 var(--dress),
+    -1px 26px 0 0 var(--dress),
+    1px 26px 0 0 var(--dress-light),
+    3px 26px 0 0 var(--dress),
+    5px 26px 0 0 var(--dress),
+    7px 26px 0 0 var(--dress),
+    9px 26px 0 0 var(--dress),
+    11px 26px 0 0 var(--dress),
+    13px 26px 0 0 var(--dress),
+    15px 26px 0 0 var(--dress),
+    17px 26px 0 0 var(--dress),
+    19px 26px 0 0 var(--dress),
+    21px 26px 0 0 var(--dress),
+    23px 26px 0 0 var(--dress-light),
+    25px 26px 0 0 var(--dress),
+    27px 26px 0 0 var(--dress),
+    29px 26px 0 0 var(--dress-dark),
+    /* 行 14 —— 露出双腿 */
+    1px 28px 0 0 var(--sock),
+    3px 28px 0 0 var(--sock),
+    5px 28px 0 0 var(--skin),
+    7px 28px 0 0 var(--skin),
+    9px 28px 0 0 var(--skin),
+    11px 28px 0 0 var(--skin),
+    13px 28px 0 0 var(--skin),
+    15px 28px 0 0 var(--skin),
+    17px 28px 0 0 var(--skin),
+    19px 28px 0 0 var(--skin),
+    21px 28px 0 0 var(--sock),
+    23px 28px 0 0 var(--sock),
+    /* 行 15 —— 小腿 + 鞋 */
+    1px 30px 0 0 var(--shoes-girl),
+    3px 30px 0 0 var(--shoes-girl),
+    5px 30px 0 0 var(--skin),
+    7px 30px 0 0 var(--skin),
+    9px 30px 0 0 var(--skin),
+    11px 30px 0 0 var(--skin),
+    13px 30px 0 0 var(--skin),
+    15px 30px 0 0 var(--skin),
+    17px 30px 0 0 var(--skin),
+    19px 30px 0 0 var(--shoes-girl),
+    21px 30px 0 0 var(--shoes-girl),
+    /* 行 16 —— 鞋底 */
+    -1px 32px 0 0 var(--shoes-girl),
+    1px 32px 0 0 var(--shoes-girl),
+    3px 32px 0 0 var(--shoes-girl),
+    5px 32px 0 0 var(--shoes-girl),
+    7px 32px 0 0 var(--shoes-girl),
+    9px 32px 0 0 var(--shoes-girl),
+    11px 32px 0 0 var(--shoes-girl),
+    13px 32px 0 0 var(--shoes-girl),
+    15px 32px 0 0 var(--shoes-girl),
+    17px 32px 0 0 var(--shoes-girl),
+    19px 32px 0 0 var(--shoes-girl),
+    21px 32px 0 0 var(--shoes-girl),
+    23px 32px 0 0 var(--shoes-girl),
+    25px 32px 0 0 var(--shoes-girl);
+}
+
+/* ============================================================
+   两人中间的「手拉手」连接像素
+   ============================================================ */
+.pixel-people__couple::after {
+  content: '';
+  position: absolute;
+  /* 男孩最右 + 女孩最左 之间，用 skin 色像素点搭桥 */
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: var(--px, 2px);
+  height: var(--px, 2px);
+  background: var(--skin);
+  box-shadow:
+    -2px 0 0 0 var(--skin),
+    2px 0 0 0 var(--skin),
+    -2px -2px 0 0 var(--skin),
+    2px -2px 0 0 var(--skin),
+    -2px 2px 0 0 var(--skin-shadow),
+    2px 2px 0 0 var(--skin-shadow);
+}
+
+/* ----- 进度条 ----- */
+.landing__progress {
+  width: 320px;
+  max-width: 92vw;
+  height: 16px;
+  border: 2px solid var(--ink-pixel);
+  border-radius: 10px;
+  background: #fff5e6;
+  overflow: visible;
+  margin: 0 auto 12px;     /* 居中 */
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.landing__progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--pink-2) 0%, var(--purple-2) 100%);
+  transition: width 0.4s ease-out;
+  border-radius: 10px;
+  position: relative;
+}
+
+.landing__progress-bar::after {
+  content: '';
+  position: absolute;
+  right: -5px;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border: 2px solid var(--ink-pixel);
+  border-radius: 50%;
+  transform: translateY(-50%);
+  box-shadow: 0 0 10px var(--glow-pink);
+}
+
+.landing__percent {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  color: var(--ink);
+  margin-bottom: 36px;
+  text-align: center;
+}
+
+.landing__buttons {
+  display: flex;
+  gap: 28px;
+  margin-bottom: 80px;
+  justify-content: center;     /* 居中 */
+}
+
+.landing__title {
+  font-family: var(--font-mono);
+  font-size: 3rem;
+  /* 暖金色 + 蓝色描边：和小王子星空背景高度协调 */
+  color: #ffe066;
+  letter-spacing: 4px;
+  margin-bottom: 4px;
+  text-shadow:
+    2px 2px 0 #1a1a3a,
+    -1px -1px 0 #1a1a3a,
+    1px -1px 0 #1a1a3a,
+    -1px 1px 0 #1a1a3a,
+    0 0 12px rgba(255, 224, 102, 0.4);
+  text-align: center;
+}
+
+.landing__subtitle {
+  font-family: var(--font-body);
+  font-size: 1.4rem;
+  /* 浅米色：在深蓝背景上清晰可读 */
+  color: #fff5e6;
+  letter-spacing: 6px;
+  margin-bottom: 24px;
+  text-align: center;
+  text-shadow:
+    1px 1px 2px rgba(0, 0, 0, 0.6),
+    0 0 8px rgba(255, 245, 230, 0.3);
+}
+
+/* ===== 贴纸装饰 ===== */
+.sticker-bear {
+  position: fixed;
+  bottom: 4%;
+  right: 6%;
+  width: clamp(80px, 12vw, 180px);
+  height: auto;
+  pointer-events: none;
+  z-index: 50;
+  filter: drop-shadow(3px 3px 6px rgba(74, 59, 92, 0.3));
+  image-rendering: pixelated;
+  animation: stickerFloat 5s ease-in-out infinite;
+}
+
+@keyframes stickerFloat {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-10px) rotate(2deg); }
+}
+
+/* 响应式 */
+@media (max-width: 640px) {
+  .landing__loading { font-size: 1.6rem; }
+  .landing__progress { width: 260px; }
+  .landing__title { font-size: 2rem; letter-spacing: 2px; }
+  .landing__buttons { gap: 16px; }
+  .landing__bg span { font-size: 4rem !important; }
+  .sticker-bear { width: 100px; right: 4%; }
+}

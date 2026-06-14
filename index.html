@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Travel Diary · Loading memories...</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/landing.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌸%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+  <!-- 流星光标 -->
+  <div class="cursor-trail" id="cursor"></div>
+
+  <!-- 飘落 Emoji 画布 -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <main class="landing">
+    <!-- 背景卡通人物 / 装饰 -->
+    <div class="landing__bg" aria-hidden="true">
+      <span>🧚‍♀️</span>
+      <span>🌂</span>
+      <span>🧞</span>
+      <span>🧚</span>
+      <span>🦋</span>
+      <span>⭐</span>
+      <i>✦</i><i>✧</i><i>✦</i><i>✧</i><i>✦</i><i>✧</i>
+    </div>
+
+    <div class="landing__content">
+      <div class="landing__loading">Loading memories...</div>
+
+      <!-- 手拉手放大像素小人 -->
+      <div class="pixel-people pixel-people--big" aria-hidden="true">
+        <div class="pixel-people__ground"></div>
+        <div class="pixel-people__track">
+          <div class="pixel-people__couple" id="couple">
+            <div class="pixel-person pixel-person--boy"></div>
+            <div class="pixel-person pixel-person--girl"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="landing__progress"><div class="landing__progress-bar" id="progress-bar"></div></div>
+      <div class="landing__percent" id="percent">0%</div>
+
+      <div class="landing__buttons">
+        <button class="retro-btn" id="enter-btn">ENTER</button>
+        <button class="retro-btn" id="or-btn">OR?</button>
+      </div>
+
+      <h1 class="landing__title" style="font-family: SimSun, '宋体', Songti SC, serif;">ckl 和 cyd 的旅行日记</h1>
+      <div class="landing__subtitle" style="font-family: SimSun, '宋体', Songti SC, serif;">—— 一起环游世界吧！ ——</div>
+    </div>
+  </main>
+
+  <script src="js/cursor.js"></script>
+  <script src="js/confetti.js"></script>
+  <script src="js/landing.js"></script>
+  <script src="js/music.js"></script>
+</body>
+</html>
