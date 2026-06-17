@@ -245,10 +245,13 @@ body::after {
   background: linear-gradient(180deg, var(--pink-1) 0%, var(--purple-1) 100%);
   border: 2px solid var(--ink);
   cursor: none;
-  font-size: 1rem;
+  font-size: 0.85rem;          /* ⏮/⏭ 字符偏大, 略缩 */
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  line-height: 1;
 }
 
 .music-player__title {
