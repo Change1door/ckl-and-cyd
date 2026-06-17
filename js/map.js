@@ -25,6 +25,7 @@
   const addPhotoForm = document.getElementById('add-photo-form');
   const addPhotoCityName = document.getElementById('add-photo-city');
   const statusEl = document.getElementById('add-photo-status');
+  const addCityStatusEl = document.getElementById('add-city-status');
 
   if (!mapEl || !pinsHost || typeof window.geo === 'undefined') return;
 
@@ -313,23 +314,70 @@
   }
 
   /* ===== Modal ===== */
-  function openAddCityModal() { addCityModal.hidden = false; addCityForm.reset(); }
-  function closeAddCityModal() { addCityModal.hidden = true; }
+  function openAddCityModal() {
+    addCityForm.reset();
+    if (addCityStatusEl) addCityStatusEl.textContent = '';
+    const sb = addCityForm.querySelector('button[type="submit"]');
+    if (sb) sb.disabled = false;
+    addCityModal.hidden = false;
+  }
+  function closeAddCityModal() {
+    addCityModal.hidden = true;
+    if (addCityStatusEl) addCityStatusEl.textContent = '';
+    const sb = addCityForm.querySelector('button[type="submit"]');
+    if (sb) sb.disabled = false;
+  }
   addBtn && addBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openAddCityModal(); });
   addCityClose && addCityClose.addEventListener('click', closeAddCityModal);
   addCityCancel && addCityCancel.addEventListener('click', closeAddCityModal);
   addCityModal && addCityModal.addEventListener('click', (e) => { if (e.target === addCityModal) closeAddCityModal(); });
-  addCityForm && addCityForm.addEventListener('submit', (e) => {
+  addCityForm && addCityForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd = new FormData(addCityForm);
     const city = fd.get('city').trim(), lng = parseFloat(fd.get('lng')), lat = parseFloat(fd.get('lat'));
-    const date = fd.get('date').trim() || '', photo = fd.get('photo').trim() || `https://picsum.photos/seed/${encodeURIComponent(city)}/600/400`;
-    const note = fd.get('note').trim() || '';
-    if (!city || isNaN(lng) || isNaN(lat)) { alert('请填写城市名和经纬度'); return; }
-    const trip = { city, lng, lat, date, photos: [{ url: photo, note }] };
-    userTrips.push(trip); persistUserTrips();
-    allTrips.push(trip); photoIndex[tripKey(trip)] = 0;
+    const date = fd.get('date').trim() || '';
+    const file = fd.get('file');
+    const note = (fd.get('note') || '').toString().trim();
+    if (!city || isNaN(lng) || isNaN(lat)) { addCityStatusEl.textContent = '请填写城市名和经纬度'; return; }
+    if (lng < -180 || lng > 180 || lat < -90 || lat > 90) { addCityStatusEl.textContent = '经纬度超出范围'; return; }
+    const submitBtn = addCityForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    addCityStatusEl.textContent = '处理中...';
+    let coverUrl;
+    if (file && file.size) {
+      try {
+        coverUrl = await fileToDataURL(file);
+      } catch {
+        addCityStatusEl.textContent = '读取图片失败';
+        submitBtn.disabled = false;
+        return;
+      }
+    } else {
+      // 留空 → 自动配图
+      const seed = encodeURIComponent(city + Math.random().toString(36).slice(2, 6));
+      coverUrl = `https://picsum.photos/seed/${seed}/600/400`;
+    }
+    addCityStatusEl.textContent = '保存中...';
+    // 写入 Supabase gallery (city=..., year=..., url=..., note=...) — 这样其他人在地图上选同一个城市时, 第一张能看到这张封面
+    const year = (date && date.slice(0, 4)) || String(new Date().getFullYear());
+    const { error: insertError } = await supabase
+      .from('gallery')
+      .insert({ city, year, url: coverUrl, note: note || '' });
+    if (insertError) {
+      addCityStatusEl.textContent = '保存失败: ' + insertError.message;
+      submitBtn.disabled = false;
+      return;
+    }
+    // 本地也要加 pin（不需要 localStorage 持久化，因为 Supabase 是源头）
+    const trip = { city, lng, lat, date, photos: [{ url: coverUrl, note }] };
+    allTrips.push(trip);
+    photoIndex[tripKey(trip)] = 0;
     addPin(trip); addListItem(trip);
+    // 重新拉共享照片, 把刚加的封面作为共享照片也合并进来（这样打开弹窗时会显示）
+    await loadSharedPhotos();
+    applySharedPhotosToTrip(trip);
+    addCityStatusEl.textContent = '已保存 ✓';
+    submitBtn.disabled = false;
     closeAddCityModal();
   });
 

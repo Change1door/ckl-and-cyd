@@ -123,12 +123,13 @@
           <label>经度 / longitude (-180 ~ 180)<input type="number" name="lng" required step="0.0001" placeholder="118.0894"></label>
           <label>纬度 / latitude (-90 ~ 90)<input type="number" name="lat" required step="0.0001" placeholder="24.4798"></label>
           <label>日期 / date<input type="text" name="date" placeholder="2025-01"></label>
-          <label>封面照片链接 / cover photo URL<input type="url" name="photo" placeholder="留空自动用配图"></label>
+          <label>封面照片 / cover photo <input type="file" name="file" accept="image/*"></label>
           <label>封面照片描述 / cover note<textarea name="note" rows="3" placeholder="在鼓浪屿吃了一碗沙茶面。"></textarea></label>
           <div style="display:flex; gap: 10px; margin-top: 14px;">
             <button type="submit" class="retro-btn" style="font-size: 1rem; padding: 8px 18px;">save</button>
             <button type="button" class="retro-btn" id="add-city-cancel" style="font-size: 1rem; padding: 8px 18px; background: #eee;">cancel</button>
           </div>
+          <div id="add-city-status" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-soft); margin-top: 8px; min-height: 1.2em;"></div>
         </form>
       </div>
     </div>
