@@ -500,36 +500,43 @@
       closePhotoModal();
     });
 
-    /* ==================== Todo ==================== */
-    function loadTodos() {
-      try {
-        const d = JSON.parse(localStorage.getItem(TODO_KEY));
-        if (d && Array.isArray(d.plans) && Array.isArray(d.completed)) return d;
-      } catch {}
-      return {
-        plans: [
-          { id: 't1', text: '去冰岛看极光', done: false },
-          { id: 't2', text: '坐一次横跨西伯利亚的火车', done: false },
-          { id: 't3', text: '在清迈学做泰国菜', done: false },
-        ],
-        completed: [{ id: 'c1', text: '在巴塞罗那海边看日出', done: true }]
-      };
-    }
-    function saveTodos(d) { localStorage.setItem(TODO_KEY, JSON.stringify(d)); }
-    function uid() { return 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+    /* ==================== Todo (Supabase 共享) ==================== */
+    // 内存缓存: 启动 + 增删改后从 Supabase 拉一次
+    let todosCache = [];
+    const SEED_TODOS = [
+      { text: '去冰岛看极光', done: false },
+      { text: '坐一次横跨西伯利亚的火车', done: false },
+      { text: '在清迈学做泰国菜', done: false },
+      { text: '在巴塞罗那海边看日出', done: true },
+    ];
 
-    function renderTodos() {
-      const d = loadTodos();
+    async function loadTodos() {
+      try {
+        const { data, error } = await supabase
+          .from('todos')
+          .select('*')
+          .order('created_at', { ascending: true });
+        if (error) { console.warn('loadTodos error:', error); todosCache = []; }
+        else todosCache = data || [];
+        // 第一次启动且表为空 -> 写入 seed
+        if (todosCache.length === 0) {
+          const { error: seedErr } = await supabase.from('todos').insert(SEED_TODOS);
+          if (!seedErr) todosCache = SEED_TODOS.map((t) => ({ id: 'seed-' + t.text, ...t }));
+        }
+      } catch (e) {
+        console.warn('loadTodos failed:', e);
+        todosCache = [];
+      }
+    }
+
+    async function renderTodos() {
+      await loadTodos();
+      const plans = todosCache.filter((t) => !t.done);
+      const done = todosCache.filter((t) => t.done);
       planList.innerHTML = '';
       doneList.innerHTML = '';
-      d.plans.forEach((item) => {
-        const li = createTodoItem(item, false);
-        planList.appendChild(li);
-      });
-      d.completed.forEach((item) => {
-        const li = createTodoItem(item, true);
-        doneList.appendChild(li);
-      });
+      plans.forEach((item) => planList.appendChild(createTodoItem(item, false)));
+      done.forEach((item) => doneList.appendChild(createTodoItem(item, true)));
     }
 
     function createTodoItem(item, isCompleted) {
@@ -564,50 +571,43 @@
       return li;
     }
 
-    function toggleTodo(id) {
-      const d = loadTodos();
-      const planIdx = d.plans.findIndex((x) => x.id === id);
-      if (planIdx !== -1) {
-        const item = d.plans[planIdx];
-        const li = planList.querySelector(`[data-id="${id}"]`);
-        if (li) {
-          li.classList.add('done');
-          li.querySelector('.todo-check').textContent = '✓';
-          setTimeout(() => {
-            li.classList.add('flying');
-            setTimeout(() => {
-              item.done = true;
-              d.plans.splice(planIdx, 1);
-              d.completed.unshift(item);
-              saveTodos(d);
-              renderTodos();
-            }, 500);
-          }, 600);
-        }
+    async function toggleTodo(id) {
+      const li = planList.querySelector(`[data-id="${id}"]`);
+      // 乐观更新 UI
+      if (li) {
+        li.classList.add('done');
+        setTimeout(() => {
+          li.classList.add('flying');
+          setTimeout(() => renderTodos(), 500);
+        }, 600);
       }
+      // 写 Supabase
+      const { error } = await supabase.from('todos').update({ done: true }).eq('id', id);
+      if (error) { console.warn('toggleTodo error:', error); renderTodos(); }
     }
 
-    function deleteTodo(id) {
-      const d = loadTodos();
-      const fromPlan = d.plans.findIndex((x) => x.id === id);
-      const fromDone = d.completed.findIndex((x) => x.id === id);
-      let text = '';
-      if (fromPlan !== -1) { text = d.plans[fromPlan].text; d.plans.splice(fromPlan, 1); }
-      if (fromDone !== -1) { text = d.completed[fromDone].text; d.completed.splice(fromDone, 1); }
-      if (!text) return;
-      if (!confirm(`删除「${text}」？`)) return;
-      saveTodos(d);
-      renderTodos();
+    async function deleteTodo(id) {
+      const item = todosCache.find((x) => x.id === id);
+      if (!item) return;
+      if (!confirm(`删除「${item.text}」？`)) return;
+      // 乐观更新
+      const el = document.querySelector(`[data-id="${id}"]`);
+      if (el) el.remove();
+      const { error } = await supabase.from('todos').delete().eq('id', id);
+      if (error) { console.warn('deleteTodo error:', error); renderTodos(); }
+      else todosCache = todosCache.filter((t) => t.id !== id);
     }
 
-    function addPlan() {
+    async function addPlan() {
       const text = planInput.value.trim();
       if (!text) return;
-      const d = loadTodos();
-      d.plans.push({ id: uid(), text, done: false });
-      saveTodos(d);
       planInput.value = '';
-      renderTodos();
+      const { data, error } = await supabase.from('todos').insert({ text, done: false }).select();
+      if (error) { console.warn('addPlan error:', error); planInput.value = text; return; }
+      if (data && data[0]) {
+        todosCache.push(data[0]);
+        planList.appendChild(createTodoItem(data[0], false));
+      }
     }
 
     planAddBtn.addEventListener('click', addPlan);
