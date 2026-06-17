@@ -287,3 +287,18 @@
   .fox { left: 3%; bottom: 2%; }
   .rose { right: 3%; bottom: 3%; }
 }
+
+/* ===== 共享照片删除按钮（hover 出现）===== */
+.photo-carousel__img-wrap { position: relative; }
+.photo-carousel__delete {
+  position: absolute; top: 6px; right: 6px;
+  width: 26px; height: 26px; border: 0; border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55); color: #fff; cursor: pointer;
+  font-size: 16px; line-height: 1; display: none;
+  font-family: var(--font-mono, monospace);
+  z-index: 2;
+}
+.photo-carousel__img-wrap:hover .photo-carousel__delete {
+  display: flex; align-items: center; justify-content: center;
+}
+.photo-carousel__delete:hover { background: #ff85ad; }

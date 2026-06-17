@@ -469,7 +469,7 @@
 
       const { error: insertError } = await supabase
         .from('gallery')
-        .insert({ city, year, url: photoUrl });
+        .insert({ city, year, url: photoUrl, note: null });
 
       if (insertError) {
         statusEl.textContent = '保存失败: ' + insertError.message;

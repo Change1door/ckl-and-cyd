@@ -24,6 +24,7 @@
   const addPhotoCancel = document.getElementById('add-photo-cancel');
   const addPhotoForm = document.getElementById('add-photo-form');
   const addPhotoCityName = document.getElementById('add-photo-city');
+  const statusEl = document.getElementById('add-photo-status');
 
   if (!mapEl || !pinsHost || typeof window.geo === 'undefined') return;
 
@@ -58,6 +59,47 @@
   ];
 
   const PIN_EMOJIS = ['⭐', '♡', '✿', '★', '🌸'];
+
+  /* ===== Supabase 共享照片 ===== */
+  const SUPABASE_URL = 'https://nnjzxuuzbzvgchjrnwpr.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_sSFlXrMxGaUyyBksp7sDuA_s9GU5BIi';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function fileToDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // 缓存：所有共享相册记录。启动 + 弹窗打开 + 上传成功后 refetch。
+  let sharedPhotos = [];
+
+  async function loadSharedPhotos() {
+    try {
+      const { data, error } = await supabase
+        .from('gallery')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) { console.warn('loadSharedPhotos error:', error); sharedPhotos = []; return; }
+      sharedPhotos = data || [];
+    } catch (e) {
+      console.warn('loadSharedPhotos failed:', e);
+      sharedPhotos = [];
+    }
+  }
+
+  // 把共享照片合并进 trip.photos (in-memory only, 不写 localStorage)
+  // 用 _sharedId 标记 Supabase 行, 防止重复 append
+  function applySharedPhotosToTrip(trip) {
+    const existingIds = new Set((trip.photos || []).map((p) => p._sharedId).filter(Boolean));
+    const fresh = sharedPhotos.filter((p) => p.city === trip.city && !existingIds.has(p.id));
+    if (!fresh.length) return;
+    const tagged = fresh.map((p) => ({ url: p.url, note: p.note || p.year || '', _sharedId: p.id }));
+    trip.photos = (trip.photos || []).concat(tagged);
+  }
 
   /* ===== 世界地图 ===== */
   function loadWorld() {
@@ -143,11 +185,17 @@
     const nav = total > 1
       ? `<button class="photo-carousel__nav photo-carousel__nav--prev" data-dir="-1" type="button">‹</button><button class="photo-carousel__nav photo-carousel__nav--next" data-dir="1" type="button">›</button>`
       : '';
+    const delBtn = photo._sharedId
+      ? `<button class="photo-carousel__delete" data-shared-id="${photo._sharedId}" type="button" title="删除">×</button>`
+      : '';
     return `
       <div class="city-popup">
         <h3>♡ ${trip.city}</h3><div class="city-popup__date">${trip.date || ''}</div>
         <div class="photo-carousel" id="photo-carousel">
-          <img class="photo-carousel__img" src="${photo.url}" alt="${trip.city}" loading="lazy" onerror="this.src='https://picsum.photos/seed/${encodeURIComponent(trip.city)}/600/400'">
+          <div class="photo-carousel__img-wrap">
+            <img class="photo-carousel__img" src="${photo.url}" alt="${trip.city}" loading="lazy" onerror="this.src='https://picsum.photos/seed/${encodeURIComponent(trip.city)}/600/400'">
+            ${delBtn}
+          </div>
           ${nav}${dots}
         </div>
         <p>${photo.note || ''}</p>
@@ -162,6 +210,16 @@
     popover.hidden = false;
     positionPopover(pinEl);
     bindCarouselEvents();
+    // 后台 refetch 共享照片, 拉到了就重渲染 (用 currentTrip 守卫防止 stale)
+    loadSharedPhotos().then(() => {
+      const before = (trip.photos || []).length;
+      applySharedPhotosToTrip(trip);
+      const after = (trip.photos || []).length;
+      if (after > before && currentTrip === trip) {
+        popoverBody.innerHTML = renderPopoverBody(trip);
+        bindCarouselEvents();
+      }
+    });
   }
 
   function positionPopover(pinEl) {
@@ -202,6 +260,24 @@
         e.stopPropagation();
         if (!currentTrip) return;
         photoIndex[tripKey(currentTrip)] = parseInt(dot.dataset.i, 10);
+        popoverBody.innerHTML = renderPopoverBody(currentTrip);
+        bindCarouselEvents();
+      });
+    });
+    // 共享照片的删除按钮
+    carousel.querySelectorAll('.photo-carousel__delete').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!currentTrip) return;
+        const id = btn.dataset.sharedId;
+        if (!id) return;
+        if (!confirm('删除这张照片？')) return;
+        const { error } = await supabase.from('gallery').delete().eq('id', id);
+        if (error) { alert('删除失败: ' + error.message); return; }
+        await loadSharedPhotos();
+        const key = tripKey(currentTrip);
+        currentTrip.photos = (currentTrip.photos || []).filter((p) => p._sharedId !== id);
+        photoIndex[key] = Math.min(photoIndex[key] || 0, Math.max(0, (currentTrip.photos || []).length - 1));
         popoverBody.innerHTML = renderPopoverBody(currentTrip);
         bindCarouselEvents();
       });
@@ -261,29 +337,61 @@
     addPhotoCityName.textContent = trip.city;
     addPhotoModal.dataset.tripCity = trip.city;
     addPhotoForm.reset();
+    if (statusEl) statusEl.textContent = '';
+    const sb = addPhotoForm.querySelector('button[type="submit"]');
+    if (sb) sb.disabled = false;
     addPhotoModal.hidden = false;
   }
-  function closeAddPhotoModal() { addPhotoModal.hidden = true; }
+  function closeAddPhotoModal() {
+    addPhotoModal.hidden = true;
+    if (statusEl) statusEl.textContent = '';
+    const sb = addPhotoForm.querySelector('button[type="submit"]');
+    if (sb) sb.disabled = false;
+  }
   addPhotoClose && addPhotoClose.addEventListener('click', closeAddPhotoModal);
   addPhotoCancel && addPhotoCancel.addEventListener('click', closeAddPhotoModal);
   addPhotoModal && addPhotoModal.addEventListener('click', (e) => { if (e.target === addPhotoModal) closeAddPhotoModal(); });
-  addPhotoForm && addPhotoForm.addEventListener('submit', (e) => {
+  addPhotoForm && addPhotoForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const cityName = addPhotoModal.dataset.tripCity;
     const trip = allTrips.find((t) => t.city === cityName);
     if (!trip) { closeAddPhotoModal(); return; }
     const fd = new FormData(addPhotoForm);
-    const url = fd.get('photo').trim(), note = fd.get('note').trim();
-    if (!url || !note) { alert('请填写照片链接和描述'); return; }
-    trip.photos = trip.photos || [];
-    trip.photos.push({ url, note });
-    if (isUserTrip(trip)) {
-      const idx = userTrips.indexOf(trip);
-      if (idx !== -1) { userTrips[idx] = trip; persistUserTrips(); }
+    const file = fd.get('file');
+    const note = (fd.get('note') || '').toString().trim();
+    if (!file || !file.size || !note) {
+      statusEl.textContent = '请选择图片并填写描述';
+      return;
     }
-    photoIndex[tripKey(trip)] = trip.photos.length - 1;
+    const submitBtn = addPhotoForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    statusEl.textContent = '处理中...';
+    let photoUrl;
+    try {
+      photoUrl = await fileToDataURL(file);
+    } catch (err) {
+      statusEl.textContent = '读取图片失败';
+      submitBtn.disabled = false;
+      return;
+    }
+    statusEl.textContent = '保存中...';
+    const year = (trip.date && trip.date.slice(0, 4)) || String(new Date().getFullYear());
+    const { error: insertError } = await supabase
+      .from('gallery')
+      .insert({ city: trip.city, year, url: photoUrl, note });
+    if (insertError) {
+      statusEl.textContent = '保存失败: ' + insertError.message;
+      submitBtn.disabled = false;
+      return;
+    }
+    // 重新拉一次并合并到当前 trip, 重渲染 popover
+    await loadSharedPhotos();
+    applySharedPhotosToTrip(trip);
+    photoIndex[tripKey(trip)] = (trip.photos || []).length - 1;
     popoverBody.innerHTML = renderPopoverBody(trip);
     bindCarouselEvents();
+    statusEl.textContent = '已保存 ✓';
+    submitBtn.disabled = false;
     closeAddPhotoModal();
   });
 
@@ -335,7 +443,8 @@
 
   /* ===== 启动 ===== */
   loadWorld();
-  loadTrips().then((trips) => {
+  Promise.all([loadTrips(), loadSharedPhotos()]).then(([trips]) => {
     trips.forEach((trip) => { addPin(trip); addListItem(trip); });
+    allTrips.forEach(applySharedPhotosToTrip);
   });
 })();
