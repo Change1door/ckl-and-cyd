@@ -501,11 +501,14 @@
       const r = mapRect();
       const cx = r.left + r.width / 2;
       const cy = r.top + r.height / 2;
-      const rx = r.width / 2 + 70;
-      const ry = r.height / 2 + 50;
+      // 用飞机实际尺寸算轨道半径和居中偏移, 适配手机缩放后的飞机
+      const pw = plane.offsetWidth;
+      const ph = plane.offsetHeight;
+      const rx = r.width / 2 + pw * 0.4;
+      const ry = r.height / 2 + ph * 0.4;
       angle += 0.0015;   // 很慢
-      const x = cx + rx * Math.cos(angle) - 90;
-      const y = cy + ry * Math.sin(angle) - 90;
+      const x = cx + rx * Math.cos(angle) - pw / 2;
+      const y = cy + ry * Math.sin(angle) - ph / 2;
       plane.style.left = x + 'px';
       plane.style.top = y + 'px';
       // 飞机朝向轨迹方向

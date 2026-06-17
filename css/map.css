@@ -282,10 +282,64 @@
 
 @media (max-width: 720px) {
   .city-sidebar { display: none; }
+
+  /* 头部缩小后, .globe-stage 的 top:60px 是魔数, 同步调整 */
+  .map-header { padding: 10px 14px; }
   .map-header h1 { font-size: 1.1rem; }
   .map-header h1 small { display: none; }
+
+  /* 关键: 释放 260px 左留白, 地图撑满可用宽度 */
+  .globe-stage {
+    top: 52px;
+    padding: 14px 12px;
+  }
+  .map-flat {
+    width: min(92vw, 720px);
+    max-width: 100%;
+    margin-left: 0;
+    max-height: 56vh;
+  }
+
+  /* 装饰元素缩小但保留 */
+  .prince-plane { width: clamp(96px, 26vw, 140px); }
+  .star-orbit   { width: min(96vw, 1000px); height: min(48vw, 480px); }
   .fox { left: 3%; bottom: 2%; }
   .rose { right: 3%; bottom: 3%; }
+  .rose svg { width: 32px; height: 44px; transform: scale(0.6) translateX(8px); }
+
+  /* pin 略小但仍可点 */
+  .city-pin       { width: 20px; height: 20px; margin-left: -10px; margin-top: -20px; }
+  .city-pin__inner{ width: 20px; height: 20px; font-size: 10px; }
+
+  /* popover 不溢出 */
+  .popover { min-width: 0; max-width: min(92vw, 320px); }
+}
+
+@media (max-width: 480px) {
+  /* 头部更紧凑 */
+  .map-header { padding: 8px 10px; }
+  .map-header h1 { font-size: 1rem; letter-spacing: 2px; }
+  .globe-stage {
+    top: 46px;
+    padding: 8px 6px;
+  }
+  .map-flat { width: 96vw; max-height: 52vh; }
+
+  /* 飞机更小, 不抢戏 */
+  .prince-plane { width: clamp(80px, 28vw, 120px); }
+
+  /* 狐狸/玫瑰更小, 贴近角落 */
+  .fox { left: 2%; bottom: 1%; }
+  .rose { right: 2%; bottom: 1%; }
+  .rose svg { width: 26px; height: 36px; transform: scale(0.5) translateX(6px); }
+
+  /* popover 几乎全宽, 关闭按钮可达 */
+  .popover { max-width: calc(100vw - 24px); }
+
+  /* 音乐按钮往里缩 */
+  .music-player { bottom: 10px; right: 10px; }
+  .music-player__panel { padding: 6px 8px; font-size: 0.95rem; gap: 6px; }
+  .music-player__title { min-width: 0; }
 }
 
 /* ===== 共享照片删除按钮（hover 出现）===== */
