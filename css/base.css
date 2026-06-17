@@ -274,3 +274,50 @@ body::after {
 
 a { color: var(--ink); text-decoration: none; border-bottom: 1px dashed var(--purple-2); }
 a:hover { color: var(--pink-2); }
+
+/* ===== 浮动加号按钮 (地图 + about 共用) ===== */
+.floating-add-btn {
+  position: fixed;
+  z-index: 9600;          /* 比音乐按钮 (9700) 低一点, 避开重叠 */
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  letter-spacing: 1.5px;
+  color: var(--ink);
+  background: linear-gradient(135deg, #fff5e6 0%, #ffe1e9 100%);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: 3px 3px 0 var(--purple-2), 0 6px 20px rgba(74, 59, 92, 0.2);
+  cursor: none;
+  transition: transform 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+.floating-add-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--pink-2), 0 8px 24px rgba(255, 92, 141, 0.3);
+}
+.floating-add-btn:active { transform: translate(2px, 2px); }
+.floating-add-btn__plus {
+  display: inline-block;
+  width: 22px; height: 22px;
+  background: var(--pink-2);
+  color: #fff;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 22px;
+  font-weight: bold;
+}
+
+/* 默认桌面位置: map 页 add city 在左下角, about 页 add photo 在右下角 */
+/* map 页 (左下角) */
+.floating-add-btn--bottom-left { bottom: 20px; left: 20px; }
+/* about 页 (右下角) */
+.floating-add-btn--bottom-right { bottom: 20px; right: 20px; }
+
+@media (max-width: 720px) {
+  .floating-add-btn { padding: 10px 16px; font-size: 0.9rem; }
+  .floating-add-btn--bottom-left { bottom: 80px; left: 12px; }   /* 让出音乐按钮位置 */
+  .floating-add-btn--bottom-right { bottom: 80px; right: 12px; } /* 同上 */
+}

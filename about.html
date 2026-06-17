@@ -331,6 +331,10 @@
     </div>
   </div>
 
+  <button type="button" class="floating-add-btn floating-add-btn--bottom-right" id="floating-add-photo">
+    <span class="floating-add-btn__plus">＋</span>add photo
+  </button>
+
   <div class="music-player">
     <div class="music-player__panel">
       <button class="music-player__btn" id="music-toggle">▶</button>
@@ -439,6 +443,9 @@
       });
       const addBtn = document.getElementById('gallery-add');
       addBtn && addBtn.addEventListener('click', () => openPhotoModal());
+      // 浮动 add photo 按钮 (手机上照片墙滚到底才看到 + 号, 浮动按钮一直可见)
+      const floatingAdd = document.getElementById('floating-add-photo');
+      floatingAdd && floatingAdd.addEventListener('click', () => openPhotoModal());
     }
 
     function openPhotoModal() { photoModal.hidden = false; photoForm.reset(); statusEl.textContent = ''; }

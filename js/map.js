@@ -351,6 +351,9 @@
     if (sb) sb.disabled = false;
   }
   addBtn && addBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openAddCityModal(); });
+  // 浮动 add city 按钮 (手机上没侧栏也能用)
+  const floatingAddCity = document.getElementById('floating-add-city');
+  floatingAddCity && floatingAddCity.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openAddCityModal(); });
   addCityClose && addCityClose.addEventListener('click', closeAddCityModal);
   addCityCancel && addCityCancel.addEventListener('click', closeAddCityModal);
   addCityModal && addCityModal.addEventListener('click', (e) => { if (e.target === addCityModal) closeAddCityModal(); });
