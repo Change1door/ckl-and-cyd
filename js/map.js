@@ -75,6 +75,23 @@
     });
   }
 
+  // 上传文件到 Supabase Storage, 失败自动降级到 base64
+  // 返回 { url, via: 'storage' | 'base64' }
+  async function uploadImage(file) {
+    const safeName = (file.name || 'photo').replace(/[^\w.\-]+/g, '_').slice(0, 60);
+    const filePath = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
+    const { error: uploadError } = await supabase.storage
+      .from('photos')
+      .upload(filePath, file, { contentType: file.type || 'image/jpeg', upsert: false });
+    if (!uploadError) {
+      const { data: urlData } = supabase.storage.from('photos').getPublicUrl(filePath);
+      return { url: urlData.publicUrl, via: 'storage', path: filePath };
+    }
+    console.warn('storage upload failed, fallback to base64:', uploadError);
+    const dataUrl = await fileToDataURL(file);
+    return { url: dataUrl, via: 'base64', path: null };
+  }
+
   // 缓存：所有共享相册记录。启动 + 弹窗打开 + 上传成功后 refetch。
   let sharedPhotos = [];
 
@@ -187,7 +204,7 @@
       ? `<button class="photo-carousel__nav photo-carousel__nav--prev" data-dir="-1" type="button">‹</button><button class="photo-carousel__nav photo-carousel__nav--next" data-dir="1" type="button">›</button>`
       : '';
     const delBtn = photo._sharedId
-      ? `<button class="photo-carousel__delete" data-shared-id="${photo._sharedId}" type="button" title="删除">×</button>`
+      ? `<button class="photo-carousel__delete" data-shared-id="${photo._sharedId}" data-shared-url="${(photo.url || '').replace(/"/g, '&quot;')}" type="button" title="删除">×</button>`
       : '';
     return `
       <div class="city-popup">
@@ -271,10 +288,16 @@
         e.stopPropagation();
         if (!currentTrip) return;
         const id = btn.dataset.sharedId;
+        const url = btn.dataset.sharedUrl || '';
         if (!id) return;
         if (!confirm('删除这张照片？')) return;
         const { error } = await supabase.from('gallery').delete().eq('id', id);
         if (error) { alert('删除失败: ' + error.message); return; }
+        // 同步删除 Storage 文件 (失败忽略, 不阻塞)
+        if (url && url.includes('/storage/v1/object/public/photos/')) {
+          const path = url.split('/storage/v1/object/public/photos/')[1];
+          if (path) supabase.storage.from('photos').remove([path]).catch(() => {});
+        }
         await loadSharedPhotos();
         const key = tripKey(currentTrip);
         currentTrip.photos = (currentTrip.photos || []).filter((p) => p._sharedId !== id);
@@ -342,12 +365,14 @@
     if (lng < -180 || lng > 180 || lat < -90 || lat > 90) { addCityStatusEl.textContent = '经纬度超出范围'; return; }
     const submitBtn = addCityForm.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
-    addCityStatusEl.textContent = '处理中...';
+    addCityStatusEl.textContent = '上传中...';
     let coverUrl;
     if (file && file.size) {
       try {
-        coverUrl = await fileToDataURL(file);
-      } catch {
+        const result = await uploadImage(file);
+        coverUrl = result.url;
+        addCityStatusEl.textContent = result.via === 'base64' ? 'Storage 失败, 已用 base64 兜底...' : '保存中...';
+      } catch (err) {
         addCityStatusEl.textContent = '读取图片失败';
         submitBtn.disabled = false;
         return;
@@ -356,8 +381,8 @@
       // 留空 → 自动配图
       const seed = encodeURIComponent(city + Math.random().toString(36).slice(2, 6));
       coverUrl = `https://picsum.photos/seed/${seed}/600/400`;
+      addCityStatusEl.textContent = '保存中...';
     }
-    addCityStatusEl.textContent = '保存中...';
     // 写入 Supabase gallery (city=..., year=..., url=..., note=...) — 这样其他人在地图上选同一个城市时, 第一张能看到这张封面
     const year = (date && date.slice(0, 4)) || String(new Date().getFullYear());
     const { error: insertError } = await supabase
@@ -413,16 +438,17 @@
     }
     const submitBtn = addPhotoForm.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
-    statusEl.textContent = '处理中...';
+    statusEl.textContent = '上传中...';
     let photoUrl;
     try {
-      photoUrl = await fileToDataURL(file);
+      const result = await uploadImage(file);
+      photoUrl = result.url;
+      statusEl.textContent = result.via === 'base64' ? 'Storage 失败, 已用 base64 兜底...' : '保存中...';
     } catch (err) {
       statusEl.textContent = '读取图片失败';
       submitBtn.disabled = false;
       return;
     }
-    statusEl.textContent = '保存中...';
     const year = (trip.date && trip.date.slice(0, 4)) || String(new Date().getFullYear());
     const { error: insertError } = await supabase
       .from('gallery')

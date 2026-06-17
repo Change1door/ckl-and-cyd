@@ -402,7 +402,7 @@
         fig.className = 'gallery-item';
         const url = p.url || p.photo_url;
         fig.innerHTML = `
-          <button class="gallery-delete" data-id="${p.id}" title="删除">×</button>
+          <button class="gallery-delete" data-id="${p.id}" data-url="${url}" title="删除">×</button>
           <img src="${url}" alt="${p.city || ''}" loading="lazy">
           <div class="gallery-caption">${p.city || '?'} · ${p.year || '?'}</div>
         `;
@@ -422,15 +422,18 @@
         btn.addEventListener('click', async (e) => {
           e.stopPropagation();
           const id = btn.dataset.id;
+          const url = btn.dataset.url || '';
           if (!confirm('删除这张照片？')) return;
-          // 从 Supabase 表删除
+          // 1. 从 Supabase 表删除
           const { error } = await supabase.from('gallery').delete().eq('id', id);
-          if (error) {
-            alert('删除失败: ' + error.message);
-            return;
+          if (error) { alert('删除失败: ' + error.message); return; }
+          // 2. 如果是 Storage 里的图, 同步删文件 (不阻塞: 失败就忽略)
+          if (url && url.includes('/storage/v1/object/public/photos/')) {
+            const path = url.split('/storage/v1/object/public/photos/')[1];
+            if (path) {
+              supabase.storage.from('photos').remove([path]).catch(() => {});
+            }
           }
-          // 同时删存储桶文件（可选，忽略错误）:
-          // supabase.storage.from('photos').remove(id);
           await loadPhotos();
         });
       });
@@ -453,12 +456,29 @@
       const file = fd.get('file');
       if (!city || !year) { alert('请填写城市和年份'); return; }
 
-      statusEl.textContent = '处理中...';
-
-      // 把文件转 base64 data URL
-      let photoUrl;
+      let photoUrl = null;
       if (file && file.size) {
-        photoUrl = await fileToDataURL(file);
+        statusEl.textContent = '上传中...';
+        // 1. 先尝试 Supabase Storage
+        const safeName = (file.name || 'photo').replace(/[^\w.\-]+/g, '_').slice(0, 60);
+        const filePath = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
+        const { error: uploadError } = await supabase.storage
+          .from('photos')
+          .upload(filePath, file, { contentType: file.type || 'image/jpeg', upsert: false });
+        if (uploadError) {
+          console.warn('storage upload failed, fallback to base64:', uploadError);
+          statusEl.textContent = 'Storage 上传失败，改用 base64 兜底...';
+          // 2. 失败: 自动降级到 base64 (绝不会让用户回到粘贴 URL 模式)
+          try {
+            photoUrl = await fileToDataURL(file);
+          } catch (e2) {
+            statusEl.textContent = '读取图片失败: ' + (e2.message || e2);
+            return;
+          }
+        } else {
+          const { data: urlData } = supabase.storage.from('photos').getPublicUrl(filePath);
+          photoUrl = urlData.publicUrl;
+        }
       } else {
         // 留空 → 自动配图
         const seed = encodeURIComponent(city + year + Math.random().toString(36).slice(2, 6));
@@ -466,7 +486,6 @@
       }
 
       statusEl.textContent = '保存中...';
-
       const { error: insertError } = await supabase
         .from('gallery')
         .insert({ city, year, url: photoUrl, note: null });
