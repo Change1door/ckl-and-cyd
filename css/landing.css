@@ -3,13 +3,13 @@
    ============================================================ */
 
 /* ----- 全屏背景图 ----- */
-.landing {
+  body[data-route="home"] .landing {
   position: relative;
   min-height: 100vh;
   overflow: hidden;
 }
 
-.landing::before {
+  body[data-route="home"] .landing::before {
   content: '';
   position: fixed;
   inset: 0;
@@ -38,7 +38,7 @@
   --ink-pixel: #2a1f3d;
 }
 
-.pixel-people {
+  body[data-route="home"] .pixel-people {
   position: relative;
   width: 100%;
   max-width: 540px;
@@ -47,14 +47,14 @@
 }
 
 /* 放大版：单像素 4px（小人明显更大，更精细） */
-.pixel-people--big {
+  body[data-route="home"] .pixel-people--big {
   --px: 4px;
   max-width: 700px;
   height: 170px;
   margin: 26px auto 36px;
 }
 
-.pixel-people__ground {
+  body[data-route="home"] .pixel-people__ground {
   position: absolute;
   bottom: 6px;
   left: 0;
@@ -65,7 +65,7 @@
   box-shadow: 0 4px 0 rgba(74, 59, 92, 0.15);
 }
 
-.pixel-people__track {
+  body[data-route="home"] .pixel-people__track {
   position: absolute;
   bottom: 12px;
   left: 0;
@@ -73,7 +73,7 @@
   height: 120px;
 }
 
-.pixel-people__couple {
+  body[data-route="home"] .pixel-people__couple {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -82,18 +82,18 @@
   image-rendering: pixelated;
 }
 
-.pixel-people__couple.walking .pixel-person--boy  { animation: pixelWalkBoy  0.5s steps(2) infinite; }
-.pixel-people__couple.walking .pixel-person--girl { animation: pixelWalkGirl 0.5s steps(2) infinite; }
+.pixel-people__couple.walking .pixel-person--boy  { animation: homePixelWalkBoy  0.5s steps(2) infinite; }
+.pixel-people__couple.walking .pixel-person--girl { animation: homePixelWalkGirl 0.5s steps(2) infinite; }
 
-@keyframes pixelWalkBoy  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
-@keyframes pixelWalkGirl { 0%,100%{transform:translateY(-3px)} 50%{transform:translateY(0)} }
+@keyframes homePixelWalkBoy  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
+@keyframes homePixelWalkGirl { 0%,100%{transform:translateY(-3px)} 50%{transform:translateY(0)} }
 
 /* ----- 像素小人：sprite 用 ::before / ::after 画整张图 -----
    每个像素 = var(--px) px（默认 2px），逐像素用 box-shadow 偏移叠加
    小人的实际 width = 列数 × --px，height = 行数 × --px
    男孩：14 列 × 17 行；女孩：14 列 × 19 行（含 2 行辫子）
    用固定 px 值（不要 calc，因 CSS 变量在 calc 里有时浏览器解析失败） */
-.pixel-person {
+  body[data-route="home"] .pixel-person {
   position: relative;
   width: 56px;     /* 14 × 4px（--px 默认 2px 或 .pixel-people--big 里 4px） */
   height: 76px;    /* 19 × 4px */
@@ -101,7 +101,7 @@
 }
 
 /* 小尺寸版本（如果 --px 是 2px） */
-.pixel-people:not(.pixel-people--big) .pixel-person {
+  body[data-route="home"] .pixel-people:not(.pixel-people--big) .pixel-person {
   width: 28px;     /* 14 × 2px */
   height: 38px;    /* 19 × 2px */
 }
@@ -112,7 +112,7 @@
 /* ============================================================
    小男孩：14 列 × 17 行
    ============================================================ */
-.pixel-person--boy::before {
+  body[data-route="home"] .pixel-person--boy::before {
   top: 0; left: 0;
   width: var(--px, 2px); height: var(--px, 2px);
   background: var(--ink-pixel);
@@ -347,7 +347,7 @@
 /* ============================================================
    小女孩：14 列 × 19 行（含两根辫子向上伸出 2 行）
    ============================================================ */
-.pixel-person--girl::after {
+  body[data-route="home"] .pixel-person--girl::after {
   top: 0; left: 0;
   width: var(--px, 2px); height: var(--px, 2px);
   background: var(--ink-pixel);
@@ -596,7 +596,7 @@
 /* ============================================================
    两人中间的「手拉手」连接像素
    ============================================================ */
-.pixel-people__couple::after {
+  body[data-route="home"] .pixel-people__couple::after {
   content: '';
   position: absolute;
   /* 男孩最右 + 女孩最左 之间，用 skin 色像素点搭桥 */
@@ -616,7 +616,7 @@
 }
 
 /* ----- 进度条 ----- */
-.landing__progress {
+  body[data-route="home"] .landing__progress {
   width: 320px;
   max-width: 92vw;
   height: 16px;
@@ -629,7 +629,7 @@
   position: relative;
 }
 
-.landing__progress-bar {
+  body[data-route="home"] .landing__progress-bar {
   height: 100%;
   width: 0%;
   background: linear-gradient(90deg, var(--pink-2) 0%, var(--purple-2) 100%);
@@ -638,7 +638,7 @@
   position: relative;
 }
 
-.landing__progress-bar::after {
+  body[data-route="home"] .landing__progress-bar::after {
   content: '';
   position: absolute;
   right: -5px;
@@ -652,7 +652,7 @@
   box-shadow: 0 0 10px var(--glow-pink);
 }
 
-.landing__percent {
+  body[data-route="home"] .landing__percent {
   font-family: var(--font-mono);
   font-size: 1.5rem;
   color: var(--ink);
@@ -660,14 +660,14 @@
   text-align: center;
 }
 
-.landing__buttons {
+  body[data-route="home"] .landing__buttons {
   display: flex;
   gap: 28px;
   margin-bottom: 80px;
   justify-content: center;     /* 居中 */
 }
 
-.landing__title {
+  body[data-route="home"] .landing__title {
   font-family: var(--font-mono);
   font-size: 3rem;
   /* 暖金色 + 蓝色描边：和小王子星空背景高度协调 */
@@ -683,7 +683,7 @@
   text-align: center;
 }
 
-.landing__subtitle {
+  body[data-route="home"] .landing__subtitle {
   font-family: var(--font-body);
   font-size: 1.4rem;
   /* 浅米色：在深蓝背景上清晰可读 */
@@ -697,7 +697,7 @@
 }
 
 /* ===== 贴纸装饰 ===== */
-.sticker-bear {
+  body[data-route="home"] .sticker-bear {
   position: fixed;
   bottom: 4%;
   right: 6%;
@@ -707,10 +707,10 @@
   z-index: 50;
   filter: drop-shadow(3px 3px 6px rgba(74, 59, 92, 0.3));
   image-rendering: pixelated;
-  animation: stickerFloat 5s ease-in-out infinite;
+  animation: homeStickerFloat 5s ease-in-out infinite;
 }
 
-@keyframes stickerFloat {
+@keyframes homeStickerFloat {
   0%, 100% { transform: translateY(0) rotate(-2deg); }
   50% { transform: translateY(-10px) rotate(2deg); }
 }

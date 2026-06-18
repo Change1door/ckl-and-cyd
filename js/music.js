@@ -1,12 +1,16 @@
 /* ============================================================
-   复古音乐播放器
+   复古音乐播放器 (SPA 模式: 跨页不中断)
    - 3 首歌硬编码 (Supabase Storage 公开 URL), 所有访问者共享
    - 上一首 / 播放暂停 / 下一首
-   - 当前选曲索引存 localStorage, 下次打开恢复
-   - 切换歌时保持播放状态 (正在播 → 切完继续播)
+   - 选曲索引 + 播放状态存 localStorage
+   - 切歌时保持播放状态
+   - 跨 hash 路由切换不重新初始化 (幂等)
    ============================================================ */
 
 (function () {
+  if (window.__musicInited) return;
+  window.__musicInited = true;
+
   const prevBtn = document.getElementById('music-prev');
   const toggleBtn = document.getElementById('music-toggle');
   const nextBtn = document.getElementById('music-next');
@@ -22,12 +26,15 @@
   ];
 
   const IDX_KEY = 'bgm-idx-v1';
+  const PLAY_KEY = 'bgm-playing-v1';
 
   function loadIndex() {
     const v = parseInt(localStorage.getItem(IDX_KEY) || '0', 10);
     return isNaN(v) || v < 0 || v >= PLAYLIST.length ? 0 : v;
   }
   function saveIndex(i) { localStorage.setItem(IDX_KEY, String(i)); }
+  function loadWasPlaying() { return localStorage.getItem(PLAY_KEY) === '1'; }
+  function saveWasPlaying(p) { localStorage.setItem(PLAY_KEY, p ? '1' : '0'); }
 
   let idx = loadIndex();
   let playing = false;
@@ -48,10 +55,12 @@
       await audio.play();
       playing = true;
       updateToggleBtn();
+      saveWasPlaying(true);
     } catch (e) {
       // 浏览器拦截自动播放 (例如 iOS Safari 严格策略) - 等用户再次点击
       playing = false;
       updateToggleBtn();
+      saveWasPlaying(false);
       if (nameEl) nameEl.textContent = '— click ▶ to start —';
     }
   }
@@ -59,6 +68,7 @@
     audio.pause();
     playing = false;
     updateToggleBtn();
+    saveWasPlaying(false);
   }
 
   // 切歌: 保留当前播放状态
@@ -86,6 +96,6 @@
     selectIndex(idx + 1);
     play();
   });
-  audio.addEventListener('play', () => { playing = true; updateToggleBtn(); });
-  audio.addEventListener('pause', () => { playing = false; updateToggleBtn(); });
+  audio.addEventListener('play', () => { playing = true; updateToggleBtn(); saveWasPlaying(true); });
+  audio.addEventListener('pause', () => { playing = false; updateToggleBtn(); saveWasPlaying(false); });
 })();

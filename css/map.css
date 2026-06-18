@@ -4,7 +4,7 @@
 
 .map-page { position: relative; min-height: 100vh; }
 
-.map-header {
+  body[data-route="map"] .map-header {
   position: sticky; top: 0; z-index: 100;
   display: flex; justify-content: space-between; align-items: center;
   padding: 14px 24px;
@@ -17,7 +17,7 @@
 .map-header nav a { font-family: var(--font-mono); font-size: 1.1rem; margin-left: 18px; letter-spacing: 2px; }
 
 /* ===== 舞台 ===== */
-.globe-stage {
+  body[data-route="map"] .globe-stage {
   position: absolute;
   top: 60px; bottom: 0; left: 0; right: 0;
   z-index: 1;
@@ -32,7 +32,7 @@
 }
 
 /* ===== 小王子飞机（沿地图缓慢飞行）===== */
-.prince-plane {
+  body[data-route="map"] .prince-plane {
   position: absolute;
   pointer-events: none;
   z-index: 4;
@@ -43,7 +43,7 @@
 }
 
 /* ===== 星轨 ===== */
-.star-orbit {
+  body[data-route="map"] .star-orbit {
   position: absolute;
   width: min(92vw, 1200px);
   height: min(46vw, 600px);
@@ -53,31 +53,31 @@
 }
 
 /* ===== 小王子 + 飞机（用 icon SVG）===== */
-.prince-plane svg {
+  body[data-route="map"] .prince-plane svg {
   width: 100%; height: 100%;
   display: block;
 }
 
 /* ===== 狐狸（隐藏）===== */
-.fox {
+  body[data-route="map"] .fox {
   position: absolute;
   bottom: 3%; left: 6%;
   pointer-events: none; z-index: 3;
   filter: drop-shadow(0 0 5px rgba(255, 140, 74, 0.3));
-  animation: foxBounce 4s ease-in-out infinite;
+  animation: mapFoxBounce 4s ease-in-out infinite;
   display: none;
 }
 
 /* ===== 玫瑰（右下角靠边，更小一点避免挡地图）===== */
-.rose {
+  body[data-route="map"] .rose {
   position: absolute;
   bottom: 2%;
   right: 2%;
   pointer-events: none; z-index: 3;
   filter: drop-shadow(0 0 5px rgba(255, 92, 141, 0.3));
-  animation: roseSway 5s ease-in-out infinite;
+  animation: mapRoseSway 5s ease-in-out infinite;
 }
-.rose svg {
+  body[data-route="map"] .rose svg {
   width: 42px;
   height: 56px;
   display: block;
@@ -85,7 +85,7 @@
 }
 
 /* ===== 儿童画笔触风格平面地图 ===== */
-.map-flat {
+  body[data-route="map"] .map-flat {
   position: relative;
   width: min(78vw, 1000px);
   aspect-ratio: 2 / 1;
@@ -105,7 +105,7 @@
   margin-left: 20px;
 }
 
-.map-flat svg {
+  body[data-route="map"] .map-flat svg {
   width: 100%; height: 100%;
   display: block;
   position: absolute; inset: 0;
@@ -113,7 +113,7 @@
 }
 
 /* 大陆 —— 粗边缘像蜡笔画 */
-.continent {
+  body[data-route="map"] .continent {
   fill: rgba(255, 235, 210, 0.88);
   stroke: rgba(180, 130, 100, 0.4);
   stroke-width: 1.8;
@@ -125,7 +125,7 @@
 /* 经纬线 —— 极淡的虚线 */
 .graticule path,
 .graticule circle,
-.graticule line {
+  body[data-route="map"] .graticule line {
   fill: none;
   stroke: rgba(255, 245, 235, 0.5);
   stroke-width: 0.5;
@@ -133,14 +133,14 @@
 }
 
 /* ===== 城市 pin ===== */
-#city-pins {
+  body[data-route="map"] #city-pins {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 10;
 }
 
-.city-pin {
+  body[data-route="map"] .city-pin {
   position: absolute;
   left: var(--x, 50%);
   top: var(--y, 50%);
@@ -152,7 +152,7 @@
   z-index: 5;
 }
 
-.city-pin__inner {
+  body[data-route="map"] .city-pin__inner {
   width: 22px; height: 22px;
   display: flex; align-items: center; justify-content: center;
   background: radial-gradient(circle, var(--pink-1) 0%, var(--purple-1) 100%);
@@ -160,29 +160,29 @@
   border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg);
   box-shadow: 2px 2px 0 rgba(74, 59, 92, 0.3), 0 0 10px var(--glow-pink);
-  animation: pinPulse 2.4s ease-in-out infinite;
+  animation: mapPinPulse 2.4s ease-in-out infinite;
   font-size: 11px;
 }
 .city-pin__inner span { transform: rotate(45deg); }
 .city-pin:hover { transform: scale(1.3); z-index: 10; }
 .city-pin.hidden { opacity: 0; pointer-events: none; }
 
-@keyframes pinPulse {
+@keyframes mapPinPulse {
   0%, 100% { box-shadow: 2px 2px 0 rgba(74,59,92,0.3), 0 0 10px var(--glow-pink); }
   50% { box-shadow: 2px 2px 0 rgba(74,59,92,0.3), 0 0 22px var(--glow-pink); }
 }
 
 /* ===== 弹窗 ===== */
-.popover-host {
+  body[data-route="map"] .popover-host {
   position: fixed; inset: 0; pointer-events: none; z-index: 300;
 }
-.popover {
+  body[data-route="map"] .popover {
   position: absolute; pointer-events: auto;
   background: #fff5e6; border: 2px solid var(--ink);
   border-radius: 6px; box-shadow: 4px 4px 0 var(--purple-2);
   padding: 12px; min-width: 260px; max-width: 320px;
 }
-.popover__close {
+  body[data-route="map"] .popover__close {
   position: absolute; top: 4px; right: 6px;
   background: none; border: none;
   font-family: var(--font-mono); font-size: 1.2rem;
@@ -195,12 +195,12 @@
 .city-popup .city-popup__date { font-family: var(--font-mono); font-size: 0.9rem; color: var(--ink-soft); margin-bottom: 8px; }
 
 .photo-carousel { position: relative; margin-bottom: 10px; }
-.photo-carousel__img {
+  body[data-route="map"] .photo-carousel__img {
   width: 100%; max-height: 320px; height: auto;
   object-fit: contain; background: #f0e6d6;
   display: block; border: 2px solid var(--ink); box-sizing: border-box;
 }
-.photo-carousel__nav {
+  body[data-route="map"] .photo-carousel__nav {
   position: absolute; top: 50%; transform: translateY(-50%);
   width: 32px; height: 32px; border-radius: 50%;
   background: rgba(255,245,230,0.95); border: 2px solid var(--ink);
@@ -210,12 +210,12 @@
 }
 .photo-carousel__nav--prev { left: 6px; }
 .photo-carousel__nav--next { right: 6px; }
-.photo-carousel__dots {
+  body[data-route="map"] .photo-carousel__dots {
   position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
   display: flex; gap: 5px; background: rgba(0,0,0,0.3);
   padding: 4px 8px; border-radius: 10px; z-index: 2;
 }
-.photo-carousel__dot {
+  body[data-route="map"] .photo-carousel__dot {
   width: 6px; height: 6px; border-radius: 50%;
   background: rgba(255,255,255,0.5); cursor: none;
 }
@@ -223,11 +223,11 @@
 
 .city-popup p { font-size: 1rem; line-height: 1.5; color: var(--ink); }
 
-.popover__actions {
+  body[data-route="map"] .popover__actions {
   display: flex; gap: 8px; margin-top: 10px; padding-top: 10px;
   border-top: 2px dashed var(--purple-2);
 }
-.popover__btn {
+  body[data-route="map"] .popover__btn {
   flex: 1; font-family: var(--font-mono); font-size: 0.9rem;
   padding: 6px 10px; background: #fff5e6;
   border: 2px solid var(--ink); border-radius: 4px;
@@ -238,14 +238,14 @@
 .popover__btn--danger { color: #b03030; box-shadow: 2px 2px 0 #ff6fa3; }
 
 /* ===== 侧栏 ===== */
-.city-sidebar {
+  body[data-route="map"] .city-sidebar {
   position: fixed; top: 80px; left: 16px; z-index: 50;
   width: 220px; max-height: calc(100vh - 120px); overflow-y: auto;
   font-family: var(--font-body);
 }
 .city-sidebar__title { font-family: var(--font-mono); font-size: 1rem; letter-spacing: 2px; margin-bottom: 10px; color: var(--ink); text-shadow: 1px 1px 0 #fff; }
 .city-sidebar ul { list-style: none; padding: 0; margin: 0; }
-.city-sidebar li {
+  body[data-route="map"] .city-sidebar li {
   display: flex; align-items: center; gap: 8px;
   padding: 6px 10px; margin-bottom: 4px;
   background: rgba(255,245,230,0.85); border: 2px solid var(--ink);
@@ -257,24 +257,24 @@
 .city-sidebar__add { width: 100%; }
 
 /* ===== Modal ===== */
-.modal {
+  body[data-route="map"] .modal {
   position: fixed; inset: 0;
   background: rgba(74,59,92,0.5); z-index: 500;
   display: flex; align-items: center; justify-content: center;
   backdrop-filter: blur(4px);
 }
 .modal[hidden] { display: none; }
-.modal form label {
+  body[data-route="map"] .modal form label {
   display: block; margin-bottom: 12px;
   font-family: var(--font-mono); font-size: 0.95rem; color: var(--ink);
 }
-.modal form input, .modal form textarea {
+  body[data-route="map"] .modal form input, body[data-route="map"] .modal form textarea {
   display: block; width: 100%; margin-top: 4px; padding: 6px 10px;
   font-family: var(--font-body); font-size: 1rem;
   background: #fff; border: 2px solid var(--ink); border-radius: 4px;
   box-sizing: border-box;
 }
-.modal form input:focus, .modal form textarea:focus {
+  body[data-route="map"] .modal form input:focus, body[data-route="map"] .modal form textarea:focus {
   outline: none; border-color: var(--purple-2);
   box-shadow: 0 0 0 3px var(--glow-pink);
 }
@@ -289,11 +289,11 @@
   .map-header h1 small { display: none; }
 
   /* 关键: 释放 260px 左留白, 地图撑满可用宽度 */
-  .globe-stage {
+  body[data-route="map"] .globe-stage {
     top: 52px;
     padding: 14px 12px;
   }
-  .map-flat {
+  body[data-route="map"] .map-flat {
     width: min(92vw, 720px);
     max-width: 100%;
     margin-left: 0;
@@ -319,7 +319,7 @@
   /* 头部更紧凑 */
   .map-header { padding: 8px 10px; }
   .map-header h1 { font-size: 1rem; letter-spacing: 2px; }
-  .globe-stage {
+  body[data-route="map"] .globe-stage {
     top: 46px;
     padding: 8px 6px;
   }
@@ -344,7 +344,7 @@
 
 /* ===== 共享照片删除按钮（hover 出现）===== */
 .photo-carousel__img-wrap { position: relative; }
-.photo-carousel__delete {
+  body[data-route="map"] .photo-carousel__delete {
   position: absolute; top: 6px; right: 6px;
   width: 26px; height: 26px; border: 0; border-radius: 50%;
   background: rgba(0, 0, 0, 0.55); color: #fff; cursor: pointer;
@@ -352,7 +352,7 @@
   font-family: var(--font-mono, monospace);
   z-index: 2;
 }
-.photo-carousel__img-wrap:hover .photo-carousel__delete {
+  body[data-route="map"] .photo-carousel__img-wrap:hover .photo-carousel__delete {
   display: flex; align-items: center; justify-content: center;
 }
 .photo-carousel__delete:hover { background: #ff85ad; }

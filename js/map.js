@@ -61,10 +61,9 @@
 
   const PIN_EMOJIS = ['⭐', '♡', '✿', '★', '🌸'];
 
-  /* ===== Supabase 共享照片 ===== */
-  const SUPABASE_URL = 'https://nnjzxuuzbzvgchjrnwpr.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_sSFlXrMxGaUyyBksp7sDuA_s9GU5BIi';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  /* ===== Supabase 共享照片 (复用 shell 里的 client) ===== */
+  const supabase = window.__sb;
+  if (!supabase) console.warn('map.js: window.__sb not available');
 
   function fileToDataURL(file) {
     return new Promise((resolve, reject) => {
@@ -472,13 +471,17 @@
     closeAddPhotoModal();
   });
 
-  /* ===== 全局 ===== */
+  /* ===== 全局 (仅在 map 路由生效) ===== */
+  function isMapRoute() { return document.body.dataset.route === 'map'; }
+
   document.addEventListener('click', (e) => {
+    if (!isMapRoute()) return;
     if (e.target.closest('.popover') || e.target.closest('.city-pin') || e.target.closest('.city-sidebar') || e.target.closest('.modal') || e.target.closest('.popover-host')) return;
     closePopover();
   });
 
   document.addEventListener('keydown', (e) => {
+    if (!isMapRoute()) return;
     if (e.target.matches('input, textarea')) return;
     if (e.key === 'Escape') { closePopover(); closeAddCityModal(); closeAddPhotoModal(); }
     else if (e.key === 'n' || e.key === 'N') openAddCityModal();
@@ -497,6 +500,7 @@
 
   /* ===== 小王子开飞机，沿地图缓慢飞行 ===== */
   const plane = document.querySelector('.prince-plane');
+  let planeRafId = null;
   if (plane && mapEl) {
     let angle = 0;
     const mapRect = () => mapEl.getBoundingClientRect();
@@ -504,27 +508,59 @@
       const r = mapRect();
       const cx = r.left + r.width / 2;
       const cy = r.top + r.height / 2;
-      // 用飞机实际尺寸算轨道半径和居中偏移, 适配手机缩放后的飞机
       const pw = plane.offsetWidth;
       const ph = plane.offsetHeight;
       const rx = r.width / 2 + pw * 0.4;
       const ry = r.height / 2 + ph * 0.4;
-      angle += 0.0015;   // 很慢
+      angle += 0.0015;
       const x = cx + rx * Math.cos(angle) - pw / 2;
       const y = cy + ry * Math.sin(angle) - ph / 2;
       plane.style.left = x + 'px';
       plane.style.top = y + 'px';
-      // 飞机朝向轨迹方向
       plane.style.transform = `rotate(${angle * 180 / Math.PI + 90}deg)`;
-      requestAnimationFrame(animatePlane);
+      planeRafId = requestAnimationFrame(animatePlane);
     }
-    requestAnimationFrame(animatePlane);
   }
+  function startPlane() { if (plane && planeRafId === null) planeRafId = requestAnimationFrame(animatePlane); }
+  function stopPlane() { if (planeRafId !== null) { cancelAnimationFrame(planeRafId); planeRafId = null; } }
 
-  /* ===== 启动 ===== */
-  loadWorld();
-  Promise.all([loadTrips(), loadSharedPhotos()]).then(([trips]) => {
-    trips.forEach((trip) => { addPin(trip); addListItem(trip); });
-    allTrips.forEach(applySharedPhotosToTrip);
-  });
+  /* ===== 公开 API (router 调用) ===== */
+  window.MapPage = {
+    init() {
+      // 重置: 清掉旧 pins 和 SVG layers
+      const gCont = document.getElementById('continents');
+      const gGrid = document.getElementById('graticule');
+      if (gCont) gCont.innerHTML = '';
+      if (gGrid) gGrid.innerHTML = '';
+      const cl = document.getElementById('city-list');
+      if (cl) cl.innerHTML = '';
+      const pinsHost = document.getElementById('city-pins');
+      if (pinsHost) pinsHost.innerHTML = '';
+      allTrips = [];
+      userTrips = [];
+      photoIndex = {};
+      currentTrip = null;
+      // 显示浮动 add city 按钮
+      const fab = document.getElementById('floating-add-city');
+      if (fab) fab.hidden = false;
+      // 加载世界地图 + 数据 + 飞机
+      loadWorld();
+      Promise.all([loadTrips(), loadSharedPhotos()]).then(([trips]) => {
+        trips.forEach((trip) => { addPin(trip); addListItem(trip); });
+        allTrips.forEach(applySharedPhotosToTrip);
+      });
+      startPlane();
+    },
+    teardown() {
+      stopPlane();
+      // 关闭 popover 和 modals
+      if (popover) popover.hidden = true;
+      if (addCityModal) addCityModal.hidden = true;
+      if (addPhotoModal) addPhotoModal.hidden = true;
+      currentTrip = null;
+      // 隐藏浮动 add city
+      const fab = document.getElementById('floating-add-city');
+      if (fab) fab.hidden = true;
+    }
+  };
 })();

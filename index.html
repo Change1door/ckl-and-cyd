@@ -4,62 +4,285 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Pragma" "no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>Travel Diary · Loading memories...</title>
+  <title>Travel Diary</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌸%3C/text%3E%3C/svg%3E">
+
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/landing.css">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌸%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/about.css">
+  <link rel="stylesheet" href="css/map.css">
 </head>
-<body>
-  <!-- 流星光标 -->
+<body data-route="home">
+  <!-- ===== Shell-level effects: 全局, 跨路由 ===== -->
   <div class="cursor-trail" id="cursor"></div>
-
-  <!-- 飘落 Emoji 画布 -->
   <canvas id="confetti-canvas"></canvas>
 
-  <main class="landing">
-    <!-- 背景卡通人物 / 装饰 -->
-    <div class="landing__bg" aria-hidden="true">
-      <span>🧚‍♀️</span>
-      <span>🌂</span>
-      <span>🧞</span>
-      <span>🧚</span>
-      <span>🦋</span>
-      <span>⭐</span>
-      <i>✦</i><i>✧</i><i>✦</i><i>✧</i><i>✦</i><i>✧</i>
-    </div>
+  <!-- ===== Shell-level header: 路由切换时换 title 和 nav ===== -->
+  <header class="map-header" id="app-header" hidden>
+    <h1 id="app-header-title">♡ Travel Diary</h1>
+    <nav id="app-header-nav"></nav>
+  </header>
 
-    <div class="landing__content">
-      <div class="landing__loading">Loading memories...</div>
+  <!-- ===== 路由内容: 同一时刻只有一个 section 显示 ===== -->
+  <main id="app-main">
 
-      <!-- 手拉手放大像素小人 -->
-      <div class="pixel-people pixel-people--big" aria-hidden="true">
-        <div class="pixel-people__ground"></div>
-        <div class="pixel-people__track">
-          <div class="pixel-people__couple" id="couple">
-            <div class="pixel-person pixel-person--boy"></div>
-            <div class="pixel-person pixel-person--girl"></div>
+    <!-- ============ HOME (landing) ============ -->
+    <section data-route="home" class="route route-home">
+      <main class="landing">
+        <div class="landing__bg" aria-hidden="true">
+          <span>🧚‍♀️</span>
+          <span>🌂</span>
+          <span>🧞</span>
+          <span>🧚</span>
+          <span>🦋</span>
+          <span>⭐</span>
+          <i>✦</i><i>✧</i><i>✦</i><i>✧</i><i>✦</i><i>✧</i>
+        </div>
+        <div class="landing__content">
+          <div class="landing__loading">Loading memories...</div>
+          <div class="pixel-people pixel-people--big" aria-hidden="true">
+            <div class="pixel-people__ground"></div>
+            <div class="pixel-people__track">
+              <div class="pixel-people__couple" id="couple">
+                <div class="pixel-person pixel-person--boy"></div>
+                <div class="pixel-person pixel-person--girl"></div>
+              </div>
+            </div>
+          </div>
+          <div class="landing__progress"><div class="landing__progress-bar" id="progress-bar"></div></div>
+          <div class="landing__percent" id="percent">0%</div>
+          <div class="landing__buttons">
+            <button class="retro-btn" id="enter-btn">ENTER</button>
+            <button class="retro-btn" id="or-btn">OR?</button>
+          </div>
+          <h1 class="landing__title" style="font-family: SimSun, '宋体', Songti SC, serif;">ckl 和 cyd 的旅行日记</h1>
+          <div class="landing__subtitle" style="font-family: SimSun, '宋体', Songti SC, serif;">—— 一起环游世界吧！ ——</div>
+        </div>
+      </main>
+    </section>
+
+    <!-- ============ ABOUT ============ -->
+    <section data-route="about" class="route route-about" hidden>
+      <main class="about-page">
+        <div class="about-grid">
+          <!-- 左: 头像 + 计划 -->
+          <section>
+            <figure class="about-photo">
+              <img src="assets/photos/about-main.jpg" alt="avatar">
+            </figure>
+            <div class="profile-section" style="margin-top: 18px;">
+              <h2>🌸 计划</h2>
+              <ul class="todo-list" id="plan-list"></ul>
+              <div class="todo-input-wrap">
+                <input type="text" class="todo-input" id="plan-input" placeholder="写一条旅行计划..." maxlength="60">
+                <button class="todo-add-btn" id="plan-add-btn" type="button">＋</button>
+              </div>
+            </div>
+            <div class="profile-section">
+              <h2>🎀 已完成</h2>
+              <ul class="todo-list" id="done-list"></ul>
+            </div>
+          </section>
+          <!-- 右: 文字 + 照片墙 -->
+          <section>
+            <div class="profile-name">Our Diary</div>
+            <div class="profile-handle">@traveler · since 2025</div>
+            <p class="profile-bio">嗨嗨嗨！这里是cyd和ckl的旅行日记</p>
+            <div class="profile-section">
+              <h2>photo album</h2>
+              <div class="gallery" id="gallery"></div>
+              <div id="gallery-upload-status" style="font-family:var(--font-mono);font-size:0.85rem;color:var(--ink-soft);margin-top:6px;"></div>
+            </div>
+            <a class="map-link retro-btn" href="#map">see our map →</a>
+          </section>
+        </div>
+      </main>
+
+      <!-- about 用的 add-photo modal -->
+      <div class="modal" id="add-photo-modal" hidden>
+        <div class="win98" style="width: 360px; max-width: 92vw;">
+          <div class="win98__titlebar">
+            <span>add a new photo (shared)</span>
+            <div class="win98__titlebar-buttons"><span id="add-photo-close">×</span></div>
+          </div>
+          <div style="padding: 18px;">
+            <form id="add-photo-form">
+              <label class="modal-label">城市 / city <input type="text" name="city" required placeholder="e.g. 上海"></label>
+              <label class="modal-label">年份 / year <input type="number" name="year" required min="1900" max="2100" placeholder="2025"></label>
+              <label class="modal-label">选择图片 / choose photo <input type="file" name="file" accept="image/*" style="padding:4px;"></label>
+              <div style="display:flex; gap: 10px; margin-top: 14px;">
+                <button type="submit" class="retro-btn" style="font-size: 1rem; padding: 8px 18px;">save</button>
+                <button type="button" class="retro-btn" id="add-photo-cancel" style="font-size: 1rem; padding: 8px 18px; background: #eee;">cancel</button>
+              </div>
+              <p style="font-size:0.8rem;color:var(--ink-soft);margin-top:6px;">
+                💡 选相册里的图直接上传，照片自动共享给所有人。
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ MAP ============ -->
+    <section data-route="map" class="route route-map" hidden>
+      <main class="map-page">
+        <aside class="city-sidebar win98">
+          <div class="win98__titlebar">places we have been<div class="win98__titlebar-buttons"><span>_</span><span>×</span></div></div>
+          <div style="padding: 10px;">
+            <div class="city-sidebar__title">— click to fly —</div>
+            <ul id="city-list"></ul>
+            <button class="retro-btn city-sidebar__add" id="add-city-btn" type="button">＋ add city</button>
+          </div>
+        </aside>
+
+        <div class="globe-stage">
+          <svg class="star-orbit" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid meet">
+            <ellipse cx="600" cy="300" rx="560" ry="270" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.2" stroke-dasharray="8 24"/>
+            <ellipse cx="600" cy="300" rx="580" ry="280" fill="none" stroke="rgba(255,200,220,0.18)" stroke-width="0.8" stroke-dasharray="3 30"/>
+            <circle r="4" fill="#fff" opacity="0.6">
+              <animateMotion dur="30s" repeatCount="indefinite" path="M40,300 a560,270 0 1,1 1120,0 a560,270 0 1,1 -1120,0"/>
+            </circle>
+            <circle r="3" fill="#ffe0f0" opacity="0.5">
+              <animateMotion dur="38s" repeatCount="indefinite" path="M20,300 a580,280 0 1,0 1160,0 a580,280 0 1,0 -1160,0" begin="-10s"/>
+            </circle>
+            <circle cx="80" cy="80" r="1.5" fill="#fff" opacity="0.5"><animate attributeName="opacity" values="0.5;0.1;0.5" dur="3s" repeatCount="indefinite"/></circle>
+            <circle cx="1080" cy="120" r="1.8" fill="#fff" opacity="0.45"><animate attributeName="opacity" values="0.45;0.1;0.45" dur="3.5s" repeatCount="indefinite"/></circle>
+            <circle cx="1050" cy="480" r="1.6" fill="#ffe0f0" opacity="0.45"><animate attributeName="opacity" values="0.45;0.1;0.45" dur="3.2s" repeatCount="indefinite"/></circle>
+            <circle cx="150" cy="520" r="1.4" fill="#fff" opacity="0.4"><animate attributeName="opacity" values="0.4;0.1;0.4" dur="2.8s" repeatCount="indefinite"/></circle>
+          </svg>
+
+          <img src="assets/stickers/boat.png" class="prince-plane" alt="" aria-hidden="true">
+
+          <div class="fox" aria-hidden="true">
+            <svg viewBox="0 0 56 64" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="28" cy="36" rx="16" ry="12" fill="#ff8c4a"/>
+              <circle cx="28" cy="18" r="12" fill="#ff8c4a"/>
+              <path d="M14,14 L8,2 L18,10" fill="#ff8c4a" stroke="#d9a878" stroke-width="0.5"/>
+              <path d="M42,14 L48,2 L38,10" fill="#ff8c4a" stroke="#d9a878" stroke-width="0.5"/>
+              <path d="M14,14 L8,6 L18,12" fill="#fff5e6"/>
+              <path d="M42,14 L48,6 L38,12" fill="#fff5e6"/>
+              <circle cx="22" cy="17" r="1.8" fill="#2a1f3d"/>
+              <circle cx="34" cy="17" r="1.8" fill="#2a1f3d"/>
+              <ellipse cx="28" cy="23" rx="5" ry="3" fill="#fff5e6"/>
+              <circle cx="28" cy="22" r="1.5" fill="#2a1f3d"/>
+              <ellipse cx="32" cy="38" rx="5" ry="8" fill="#fff5e6"/>
+              <path d="M8,36 Q0,20 10,34 Q6,42 12,38" fill="#ff6a1a"/>
+              <path d="M8,36 Q4,24 10,34" fill="#fff5e6" opacity="0.4"/>
+            </svg>
+          </div>
+
+          <div class="rose" aria-hidden="true">
+            <svg viewBox="0 0 36 56" xmlns="http://www.w3.org/2000/svg">
+              <line x1="18" y1="56" x2="18" y2="22" stroke="#6b8a5a" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M14,44 Q8,40 12,36" fill="none" stroke="#6b8a5a" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M22,40 Q28,36 24,32" fill="none" stroke="#6b8a5a" stroke-width="1.8" stroke-linecap="round"/>
+              <circle cx="18" cy="16" r="10" fill="#ff5c8d"/>
+              <circle cx="12" cy="12" r="7" fill="#ff85ad"/>
+              <circle cx="24" cy="12" r="7" fill="#ff85ad"/>
+              <circle cx="18" cy="8" r="6" fill="#ffb3d1"/>
+              <circle cx="18" cy="18" r="4.5" fill="#d63d6e"/>
+            </svg>
+          </div>
+
+          <div class="map-flat" id="globe">
+            <svg id="map-svg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+              <g class="graticule" id="graticule"></g>
+              <g class="continents" id="continents"></g>
+            </svg>
+            <div id="city-pins"></div>
+          </div>
+        </div>
+      </main>
+
+      <!-- map 用的 popover -->
+      <div class="popover-host" id="popover-host">
+        <div class="popover" id="popover" hidden>
+          <button class="popover__close" id="popover-close">×</button>
+          <div class="popover__body" id="popover-body"></div>
+          <div class="popover__actions">
+            <button class="popover__btn" id="popover-add-photo" type="button">＋ add photo</button>
+            <button class="popover__btn popover__btn--danger" id="popover-delete" type="button">✕ delete</button>
           </div>
         </div>
       </div>
 
-      <div class="landing__progress"><div class="landing__progress-bar" id="progress-bar"></div></div>
-      <div class="landing__percent" id="percent">0%</div>
-
-      <div class="landing__buttons">
-        <button class="retro-btn" id="enter-btn">ENTER</button>
-        <button class="retro-btn" id="or-btn">OR?</button>
+      <!-- map 用的 add-city modal -->
+      <div class="modal" id="add-city-modal" hidden>
+        <div class="win98" style="width: 400px; max-width: 92vw;">
+          <div class="win98__titlebar"><span>add a new city</span><div class="win98__titlebar-buttons"><span id="add-city-close">×</span></div></div>
+          <div style="padding: 18px;">
+            <form id="add-city-form">
+              <label>城市名 / city name<input type="text" name="city" required placeholder="e.g. 厦门"></label>
+              <label>经度 / longitude (-180 ~ 180)<input type="number" name="lng" required step="0.0001" placeholder="118.0894"></label>
+              <label>纬度 / latitude (-90 ~ 90)<input type="number" name="lat" required step="0.0001" placeholder="24.4798"></label>
+              <label>日期 / date<input type="text" name="date" placeholder="2025-01"></label>
+              <label>封面照片 / cover photo <input type="file" name="file" accept="image/*"></label>
+              <label>封面照片描述 / cover note<textarea name="note" rows="3" placeholder="在鼓浪屿吃了一碗沙茶面。"></textarea></label>
+              <div style="display:flex; gap: 10px; margin-top: 14px;">
+                <button type="submit" class="retro-btn" style="font-size: 1rem; padding: 8px 18px;">save</button>
+                <button type="button" class="retro-btn" id="add-city-cancel" style="font-size: 1rem; padding: 8px 18px; background: #eee;">cancel</button>
+              </div>
+              <div id="add-city-status" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-soft); margin-top: 8px; min-height: 1.2em;"></div>
+            </form>
+          </div>
+        </div>
       </div>
 
-      <h1 class="landing__title" style="font-family: SimSun, '宋体', Songti SC, serif;">ckl 和 cyd 的旅行日记</h1>
-      <div class="landing__subtitle" style="font-family: SimSun, '宋体', Songti SC, serif;">—— 一起环游世界吧！ ——</div>
-    </div>
+      <!-- map 用的 add-photo modal -->
+      <div class="modal" id="add-photo-modal" hidden>
+        <div class="win98" style="width: 400px; max-width: 92vw;">
+          <div class="win98__titlebar"><span>add photo to <b id="add-photo-city">city</b></span><div class="win98__titlebar-buttons"><span id="add-photo-close">×</span></div></div>
+          <div style="padding: 18px;">
+            <form id="add-photo-form">
+              <label>选择图片 / choose photo <input type="file" name="file" accept="image/*" required></label>
+              <label>照片描述 / photo note <textarea name="note" rows="4" required></textarea></label>
+              <div style="display:flex; gap: 10px; margin-top: 14px;">
+                <button type="submit" class="retro-btn" style="font-size: 1rem; padding: 8px 18px;">save</button>
+                <button type="button" class="retro-btn" id="add-photo-cancel" style="font-size: 1rem; padding: 8px 18px; background: #eee;">cancel</button>
+              </div>
+              <div id="add-photo-status" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-soft); margin-top: 8px; min-height: 1.2em;"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
+  <!-- ===== 浮动按钮 (按路由显示) ===== -->
+  <button type="button" class="floating-add-btn floating-add-btn--bottom-left" id="floating-add-city" hidden>
+    <span class="floating-add-btn__plus">＋</span>add city
+  </button>
+  <button type="button" class="floating-add-btn floating-add-btn--bottom-left" id="floating-add-photo" hidden>
+    <span class="floating-add-btn__plus">＋</span>add photo
+  </button>
+
+  <!-- ===== 音乐播放器: 永远不卸载, 跨路由不中断 ===== -->
+  <div class="music-player">
+    <div class="music-player__panel">
+      <button class="music-player__btn" id="music-prev" title="上一首">⏮</button>
+      <button class="music-player__btn" id="music-toggle" title="play / pause">▶</button>
+      <button class="music-player__btn" id="music-next" title="下一首">⏭</button>
+      <div class="music-player__title">now playing<small id="music-name">— pick a song —</small></div>
+    </div>
+    <audio id="bgm" loop preload="none"></audio>
+  </div>
+
+  <!-- ===== Scripts (顺序很重要) ===== -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="vendor/geo.js"></script>
+  <script src="js/supabase-client.js"></script>
   <script src="js/cursor.js"></script>
   <script src="js/confetti.js"></script>
-  <script src="js/landing.js"></script>
   <script src="js/music.js"></script>
+  <script src="js/landing.js"></script>
+  <script src="js/about.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/router.js"></script>
+  <script>
+    // 首屏立即设 data-route, 避免闪 home
+    document.body.dataset.route = (location.hash || '#home').slice(1);
+  </script>
 </body>
 </html>
