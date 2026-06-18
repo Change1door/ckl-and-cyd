@@ -9,6 +9,18 @@
   <title>Travel Diary</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌸%3C/text%3E%3C/svg%3E">
 
+  <!-- 新 session 强制从封面页 (home) 进去, 解决 iOS 桌面图标记住 hash 的问题.
+       同 session 内的站内跳转保留 hash (不影响深链). -->
+  <script>
+    if (!sessionStorage.getItem('fd_s')) {
+      sessionStorage.setItem('fd_s', '1');
+      if (location.hash && location.hash !== '#home') {
+        // 强制重置 (history.replaceState 不刷新页面, 不破坏 SPA 状态)
+        history.replaceState(null, '', location.pathname + location.search + '#home');
+      }
+    }
+  </script>
+
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/landing.css">
   <link rel="stylesheet" href="css/about.css">
@@ -276,6 +288,7 @@
   <script src="js/cursor.js"></script>
   <script src="js/confetti.js"></script>
   <script src="js/music.js"></script>
+  <script src="js/image-compress.js"></script>
   <script src="js/landing.js"></script>
   <script src="js/about.js"></script>
   <script src="js/map.js"></script>

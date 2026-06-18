@@ -75,6 +75,34 @@
     bindGallery();
   }
 
+  // 把单张新图 prepend 到 gallery 顶部 (立即可见)
+  function prependGalleryItem(p) {
+    if (!gallery) return;
+    const url = p.url || p.photo_url;
+    const fig = document.createElement('figure');
+    fig.className = 'gallery-item';
+    fig.innerHTML = `
+      <button class="gallery-delete" data-id="${p.id}" data-url="${url}" title="删除">×</button>
+      <img src="${url}" alt="${p.city || ''}">
+      <div class="gallery-caption">${p.city || '?'} · ${p.year || '?'}</div>
+    `;
+    // 插到第一个 .gallery-item 前面 (就是 + 号 之前)
+    const addBtn = document.getElementById('gallery-add');
+    if (addBtn) gallery.insertBefore(fig, addBtn);
+    else gallery.insertBefore(fig, gallery.firstChild);
+    // 新图 bind delete handler
+    const delBtn = fig.querySelector('.gallery-delete');
+    if (delBtn) {
+      delBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!confirm('删除这张照片？')) return;
+        const { error } = await supabase.from('gallery').delete().eq('id', delBtn.dataset.id);
+        if (error) { alert('删除失败: ' + error.message); return; }
+        fig.remove();
+      });
+    }
+  }
+
   function bindGallery() {
     if (!gallery) return;
     gallery.querySelectorAll('.gallery-delete').forEach((btn) => {
@@ -112,17 +140,31 @@
     if (!city || !year) { alert('请填写城市和年份'); return; }
 
     let photoUrl = null;
+    let photoId = null;
     if (file && file.size) {
-      statusEl.textContent = '上传中...';
-      const safeName = (file.name || 'photo').replace(/[^\w.\-]+/g, '_').slice(0, 60);
+      // 1. 压缩 (5MB → ~400KB, 大幅提速)
+      statusEl.textContent = '压缩中...';
+      let toUpload = file;
+      try {
+        toUpload = await window.compressImage(file);
+        const ratio = ((toUpload.size / file.size) * 100).toFixed(0);
+        statusEl.textContent = `已压缩 (${ratio}%) · 上传中...`;
+      } catch (e) {
+        console.warn('compress failed, use original:', e);
+        toUpload = file;
+        statusEl.textContent = '上传中...';
+      }
+
+      // 2. 上传 (Storage 优先, 失败降级 base64)
+      const safeName = (toUpload.name || 'photo').replace(/[^\w.\-]+/g, '_').slice(0, 60);
       const filePath = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
       const { error: uploadError } = await supabase.storage
         .from('photos')
-        .upload(filePath, file, { contentType: file.type || 'image/jpeg', upsert: false });
+        .upload(filePath, toUpload, { contentType: toUpload.type || 'image/jpeg', upsert: false });
       if (uploadError) {
         console.warn('storage upload failed, fallback to base64:', uploadError);
         statusEl.textContent = 'Storage 上传失败，改用 base64 兜底...';
-        try { photoUrl = await fileToDataURL(file); }
+        try { photoUrl = await fileToDataURL(file); }   // 兜底用原图
         catch (e2) { statusEl.textContent = '读取图片失败: ' + (e2.message || e2); return; }
       } else {
         const { data: urlData } = supabase.storage.from('photos').getPublicUrl(filePath);
@@ -133,14 +175,28 @@
       photoUrl = `https://picsum.photos/seed/${seed}/400/300`;
     }
 
+    // 3. 写表
     statusEl.textContent = '保存中...';
-    const { error: insertError } = await supabase
+    const { data: insertData, error: insertError } = await supabase
       .from('gallery')
-      .insert({ city, year, url: photoUrl, note: null });
+      .insert({ city, year, url: photoUrl, note: null })
+      .select()
+      .single();
     if (insertError) { statusEl.textContent = '保存失败: ' + insertError.message; return; }
+    photoId = insertData && insertData.id;
 
+    // 4. 立即可见: 不重新拉表, 直接把新图 push 到 gallery DOM
     statusEl.textContent = '已保存 ✓';
-    await loadPhotos();
+    if (photoId) {
+      prependGalleryItem({
+        id: photoId,
+        city,
+        year,
+        url: photoUrl
+      });
+    }
+    // 同时后台 refetch, 保证下次进来有最新数据
+    setTimeout(() => loadPhotos(), 0);
     closePhotoModal();
   }
 

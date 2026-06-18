@@ -75,20 +75,36 @@
   }
 
   // 上传文件到 Supabase Storage, 失败自动降级到 base64
-  // 返回 { url, via: 'storage' | 'base64' }
+  // 流程: 压缩 → 上传 (Storage) → 失败回退 base64
+  // 返回 { url, via: 'storage' | 'base64', path, originalSize, compressedSize }
   async function uploadImage(file) {
-    const safeName = (file.name || 'photo').replace(/[^\w.\-]+/g, '_').slice(0, 60);
+    // 1. 上传前压缩 (5MB → ~400KB, 大幅提速)
+    let toUpload = file;
+    let originalSize = file.size;
+    let compressedSize = file.size;
+    try {
+      if (window.compressImage) {
+        const compressed = await window.compressImage(file);
+        if (compressed && compressed.size) {
+          toUpload = compressed;
+          compressedSize = compressed.size;
+        }
+      }
+    } catch (e) { console.warn('compress failed, use original:', e); }
+
+    // 2. 上传 (Storage 优先, 失败降级 base64)
+    const safeName = (toUpload.name || 'photo').replace(/[^\w.\-]+/g, '_').slice(0, 60);
     const filePath = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
     const { error: uploadError } = await supabase.storage
       .from('photos')
-      .upload(filePath, file, { contentType: file.type || 'image/jpeg', upsert: false });
+      .upload(filePath, toUpload, { contentType: toUpload.type || 'image/jpeg', upsert: false });
     if (!uploadError) {
       const { data: urlData } = supabase.storage.from('photos').getPublicUrl(filePath);
-      return { url: urlData.publicUrl, via: 'storage', path: filePath };
+      return { url: urlData.publicUrl, via: 'storage', path: filePath, originalSize, compressedSize };
     }
     console.warn('storage upload failed, fallback to base64:', uploadError);
-    const dataUrl = await fileToDataURL(file);
-    return { url: dataUrl, via: 'base64', path: null };
+    const dataUrl = await fileToDataURL(file);  // 兜底用原图
+    return { url: dataUrl, via: 'base64', path: null, originalSize, compressedSize: dataUrl.length };
   }
 
   // 缓存：所有共享相册记录。启动 + 弹窗打开 + 上传成功后 refetch。
@@ -373,7 +389,14 @@
       try {
         const result = await uploadImage(file);
         coverUrl = result.url;
-        addCityStatusEl.textContent = result.via === 'base64' ? 'Storage 失败, 已用 base64 兜底...' : '保存中...';
+        const ratio = result.compressedSize && result.originalSize
+          ? ((result.compressedSize / result.originalSize) * 100).toFixed(0)
+          : null;
+        if (result.via === 'base64') {
+          addCityStatusEl.textContent = ratio ? `已压缩 (${ratio}%) · base64 兜底中...` : 'Storage 失败, base64 兜底中...';
+        } else {
+          addCityStatusEl.textContent = ratio ? `已压缩 (${ratio}%) · 保存中...` : '保存中...';
+        }
       } catch (err) {
         addCityStatusEl.textContent = '读取图片失败';
         submitBtn.disabled = false;
@@ -440,35 +463,55 @@
     }
     const submitBtn = addPhotoForm.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
-    statusEl.textContent = '上传中...';
     let photoUrl;
     try {
       const result = await uploadImage(file);
       photoUrl = result.url;
-      statusEl.textContent = result.via === 'base64' ? 'Storage 失败, 已用 base64 兜底...' : '保存中...';
+      // 状态文案带压缩率
+      if (result.compressedSize && result.originalSize) {
+        const ratio = ((result.compressedSize / result.originalSize) * 100).toFixed(0);
+        statusEl.textContent = result.via === 'base64'
+          ? `已压缩 (${ratio}%) · base64 兜底中...`
+          : `已压缩 (${ratio}%) · 保存中...`;
+      } else {
+        statusEl.textContent = result.via === 'base64' ? 'Storage 失败, 已用 base64 兜底...' : '保存中...';
+      }
     } catch (err) {
       statusEl.textContent = '读取图片失败';
       submitBtn.disabled = false;
       return;
     }
     const year = (trip.date && trip.date.slice(0, 4)) || String(new Date().getFullYear());
-    const { error: insertError } = await supabase
+    const { data: insertData, error: insertError } = await supabase
       .from('gallery')
-      .insert({ city: trip.city, year, url: photoUrl, note });
+      .insert({ city: trip.city, year, url: photoUrl, note })
+      .select()
+      .single();
     if (insertError) {
       statusEl.textContent = '保存失败: ' + insertError.message;
       submitBtn.disabled = false;
       return;
     }
-    // 重新拉一次并合并到当前 trip, 重渲染 popover
-    await loadSharedPhotos();
-    applySharedPhotosToTrip(trip);
-    photoIndex[tripKey(trip)] = (trip.photos || []).length - 1;
+
+    // 立即可见: 直接 push 到 trip.photos, 重渲染当前 popover
+    const newPhoto = {
+      id: insertData.id,
+      city: trip.city,
+      year,
+      url: photoUrl,
+      note,
+      _sharedId: insertData.id
+    };
+    trip.photos = trip.photos || [];
+    trip.photos.push(newPhoto);
+    photoIndex[tripKey(trip)] = trip.photos.length - 1;
     popoverBody.innerHTML = renderPopoverBody(trip);
     bindCarouselEvents();
     statusEl.textContent = '已保存 ✓';
     submitBtn.disabled = false;
     closeAddPhotoModal();
+    // 后台 refetch, 保持 sharedPhotos 缓存最新 (别人上传时也能合并)
+    setTimeout(() => loadSharedPhotos(), 0);
   });
 
   /* ===== 全局 (仅在 map 路由生效) ===== */
