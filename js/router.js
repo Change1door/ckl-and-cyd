@@ -50,13 +50,16 @@
   }
 
   function setRoute(routeId) {
-    if (routeId === current) return;
-    // teardown old
-    if (current && ROUTES[current]) {
+    if (routeId === current && window[ROUTES[routeId].page] && window[ROUTES[routeId].page].__initialized) {
+      return;
+    }
+    // teardown old (only if it was actually initialized)
+    if (current && ROUTES[current] && window[ROUTES[current].page] && window[ROUTES[current].page].__initialized) {
       const oldMod = window[ROUTES[current].page];
-      if (oldMod && typeof oldMod.teardown === 'function') {
+      if (typeof oldMod.teardown === 'function') {
         try { oldMod.teardown(); } catch (e) { console.warn('teardown error:', e); }
       }
+      oldMod.__initialized = false;
     }
     // swap visible section
     document.querySelectorAll('main#app-main > .route').forEach(sec => {
@@ -65,12 +68,24 @@
     document.body.dataset.route = routeId;
     applyHeader(routeId);
     showFloatingButtons(routeId);
-    // init new
-    const newMod = window[ROUTES[routeId].page];
-    if (newMod && typeof newMod.init === 'function') {
-      try { newMod.init(); } catch (e) { console.warn('init error:', e); }
+    // init new (with retry: if page module not loaded yet, wait one tick)
+    function tryInit(attempt) {
+      const newMod = window[ROUTES[routeId].page];
+      if (newMod && typeof newMod.init === 'function') {
+        try {
+          newMod.init();
+          newMod.__initialized = true;
+        } catch (e) { console.warn('init error:', e); }
+        current = routeId;
+      } else if (attempt < 50) {
+        // 模块还没加载好, 等 10ms 重试 (最多 500ms)
+        setTimeout(() => tryInit(attempt + 1), 10);
+      } else {
+        console.error('Page module not loaded after 500ms:', ROUTES[routeId].page);
+        current = routeId;
+      }
     }
-    current = routeId;
+    tryInit(0);
   }
 
   // 全局拦截 <a href="#xxx">
