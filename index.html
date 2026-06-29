@@ -318,17 +318,19 @@
 <!-- 终极兜底: 强制隐藏所有 modal + 浮动按钮, 直到路由主动开启 -->
 <script>
   (function() {
-    function forceHideModals() {
-      // 只对 modal 起作用, 不动浮动按钮
+    // 把所有 modal 的 hidden / display 状态彻底交给 [hidden] 属性
+    // 一旦 [hidden] 移除, 立即清掉 inline style 让 CSS 自然生效
+    function syncModals() {
       document.querySelectorAll('.modal').forEach(el => {
         if (el.hasAttribute('hidden')) {
           el.style.setProperty('display', 'none', 'important');
+        } else {
+          el.style.removeProperty('display');
         }
       });
     }
-    forceHideModals();
-    // 监听 DOM 变化, 任何时候有 modal 隐藏/显示都检查
-    new MutationObserver(forceHideModals).observe(document.body, {
+    syncModals();
+    new MutationObserver(syncModals).observe(document.body, {
       childList: true, subtree: true, attributes: true,
       attributeFilter: ['hidden']
     });
