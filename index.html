@@ -292,6 +292,28 @@
   <script src="js/landing.js"></script>
   <script src="js/about.js"></script>
   <script src="js/map.js"></script>
+
+<script>
+  // 路由切换时强制关闭所有 modal (避免路由间 modal 串台)
+  // 这是针对 SPA 多页面合并的兜底方案
+  (function() {
+    if (!window.__modalGuard) {
+      window.__modalGuard = true;
+      const obs = new MutationObserver((muts) => {
+        for (const m of muts) {
+          if (m.attributeName === 'data-route') {
+            // 路由切换, 关闭所有 modal
+            document.querySelectorAll('.modal').forEach(el => { el.hidden = true; });
+            // 关闭 popover
+            const p = document.getElementById('popover');
+            if (p) p.hidden = true;
+          }
+        }
+      });
+      obs.observe(document.body, { attributes: true, attributeFilter: ['data-route'] });
+    }
+  })();
+</script>
   <script src="js/router.js"></script>
   <script>
     // 首屏立即设 data-route, 避免闪 home
