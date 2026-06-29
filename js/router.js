@@ -75,10 +75,13 @@
         try {
           newMod.init();
           newMod.__initialized = true;
-        } catch (e) { console.warn('init error:', e); }
+        } catch (e) {
+          // 显示完整错误 (含 stack trace, 不只是 e.message)
+          console.error('[router] ' + ROUTES[routeId].page + '.init() threw:', e);
+          console.error('[router] stack:', e.stack);
+        }
         current = routeId;
       } else if (attempt < 50) {
-        // 模块还没加载好, 等 10ms 重试 (最多 500ms)
         setTimeout(() => tryInit(attempt + 1), 10);
       } else {
         console.error('Page module not loaded after 500ms:', ROUTES[routeId].page);
