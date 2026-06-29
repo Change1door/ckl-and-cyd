@@ -19,12 +19,12 @@
   const addCityClose = document.getElementById('add-city-close');
   const addCityCancel = document.getElementById('add-city-cancel');
   const addCityForm = document.getElementById('add-city-form');
-  const addPhotoModal = document.getElementById('add-photo-modal');
-  const addPhotoClose = document.getElementById('add-photo-close');
-  const addPhotoCancel = document.getElementById('add-photo-cancel');
-  const addPhotoForm = document.getElementById('add-photo-form');
-  const addPhotoCityName = document.getElementById('add-photo-city');
-  const statusEl = document.getElementById('add-photo-status');
+  const addPhotoModal = document.getElementById('map-add-photo-modal');
+  const addPhotoClose = document.getElementById('map-add-photo-close');
+  const addPhotoCancel = document.getElementById('map-add-photo-cancel');
+  const addPhotoForm = document.getElementById('map-add-photo-form');
+  const addPhotoCityName = document.getElementById('map-add-photo-city');
+  const statusEl = document.getElementById('map-add-photo-status');
   const addCityStatusEl = document.getElementById('add-city-status');
 
   if (!mapEl || !pinsHost || typeof window.geo === 'undefined') return;

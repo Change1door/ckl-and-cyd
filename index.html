@@ -243,18 +243,18 @@
       </div>
 
       <!-- map 用的 add-photo modal -->
-      <div class="modal" id="add-photo-modal" hidden>
+      <div class="modal" id="map-add-photo-modal" hidden>
         <div class="win98" style="width: 400px; max-width: 92vw;">
-          <div class="win98__titlebar"><span>add photo to <b id="add-photo-city">city</b></span><div class="win98__titlebar-buttons"><span id="add-photo-close">×</span></div></div>
+          <div class="win98__titlebar"><span>add photo to <b id="map-add-photo-city">city</b></span><div class="win98__titlebar-buttons"><span id="map-add-photo-close">×</span></div></div>
           <div style="padding: 18px;">
-            <form id="add-photo-form">
+            <form id="map-add-photo-form">
               <label>选择图片 / choose photo <input type="file" name="file" accept="image/*" required></label>
               <label>照片描述 / photo note <textarea name="note" rows="4" required></textarea></label>
               <div style="display:flex; gap: 10px; margin-top: 14px;">
                 <button type="submit" class="retro-btn" style="font-size: 1rem; padding: 8px 18px;">save</button>
-                <button type="button" class="retro-btn" id="add-photo-cancel" style="font-size: 1rem; padding: 8px 18px; background: #eee;">cancel</button>
+                <button type="button" class="retro-btn" id="map-add-photo-cancel" style="font-size: 1rem; padding: 8px 18px; background: #eee;">cancel</button>
               </div>
-              <div id="add-photo-status" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-soft); margin-top: 8px; min-height: 1.2em;"></div>
+              <div id="map-add-photo-status" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-soft); margin-top: 8px; min-height: 1.2em;"></div>
             </form>
           </div>
         </div>
