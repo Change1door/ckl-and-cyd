@@ -314,6 +314,25 @@
     }
   })();
 </script>
+
+<!-- 终极兜底: 强制隐藏所有 modal + 浮动按钮, 直到路由主动开启 -->
+<script>
+  (function() {
+    function forceHide() {
+      document.querySelectorAll('.modal, .floating-add-btn').forEach(el => {
+        if (el.hasAttribute('hidden')) {
+          el.style.setProperty('display', 'none', 'important');
+        }
+      });
+    }
+    forceHide();
+    // 监听 DOM 变化, 任何时候有 modal 出现都强制检查
+    new MutationObserver(forceHide).observe(document.body, {
+      childList: true, subtree: true, attributes: true,
+      attributeFilter: ['hidden']
+    });
+  })();
+</script>
   <script src="js/router.js"></script>
   <script>
     // 首屏立即设 data-route, 避免闪 home
