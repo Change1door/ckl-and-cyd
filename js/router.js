@@ -45,13 +45,30 @@
   function showFloatingButtons(routeId) {
     const cityBtn = document.getElementById('floating-add-city');
     const photoBtn = document.getElementById('floating-add-photo');
-    if (cityBtn) cityBtn.hidden = (routeId !== 'map');
-    if (photoBtn) photoBtn.hidden = (routeId !== 'about');
+    if (cityBtn) {
+      cityBtn.hidden = (routeId !== 'map');
+      cityBtn.style.display = (routeId === 'map') ? 'inline-flex' : 'none';
+    }
+    if (photoBtn) {
+      photoBtn.hidden = (routeId !== 'about');
+      photoBtn.style.display = (routeId === 'about') ? 'inline-flex' : 'none';
+    }
+    console.log('[router] showFloatingButtons', routeId, 'city:', cityBtn && cityBtn.style.display, 'photo:', photoBtn && photoBtn.style.display);
   }
 
   function setRoute(routeId) {
     if (routeId === current && window[ROUTES[routeId].page] && window[ROUTES[routeId].page].__initialized) {
       return;
+    }
+    // 暴力兜底: 路由切换时, 强制关闭所有 modal 和 popover (inline style, 不靠 [hidden] 属性)
+    document.querySelectorAll('.modal').forEach(el => {
+      el.hidden = true;
+      el.style.display = 'none';
+    });
+    const popover = document.getElementById('popover');
+    if (popover) {
+      popover.hidden = true;
+      popover.style.display = 'none';
     }
     // teardown old (only if it was actually initialized)
     if (current && ROUTES[current] && window[ROUTES[current].page] && window[ROUTES[current].page].__initialized) {
